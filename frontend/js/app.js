@@ -52,6 +52,8 @@ const api = {
   salvarRecibo: (payload) => apiCall('/recibos', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}),
   getRecibos: () => apiCall('/recibos'),
   limparHistorico: () => apiCall('/recibos', {method:'DELETE'}),
+  editarRecibo: (id, payload) => apiCall('/recibos/'+id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}),
+  excluirRecibo: (id) => apiCall('/recibos/'+id, {method:'DELETE'}),
 };
 
 // ---------- tabs ----------
@@ -219,8 +221,10 @@ async function calcularRecibo(items){
     return;
   }
 
+  const dataInput = $('#receipt-date').value; // '' ou 'AAAA-MM-DD'
   ultimoCalculo = {
-    data: new Date().toISOString(),
+    data: dataInput ? new Date(dataInput+'T00:00:00').toISOString() : new Date().toISOString(),
+    dataInput: dataInput || null, // o que manda pro backend ao salvar — null = usa "agora"
     nota: $('#receipt-note').value.trim(),
     itens: calc.itens,
     total: calc.total,
@@ -296,6 +300,7 @@ async function salvarRecibo(){
       itens: ultimoCalculo.itens,
       total: ultimoCalculo.total,
       qtd_total: ultimoCalculo.qtdTotal,
+      data: ultimoCalculo.dataInput,
     });
     historico.unshift({
       id: salvo.id, data: salvo.data, nota: salvo.nota,
@@ -318,6 +323,7 @@ $('#btn-limpar').addEventListener('click', ()=>{
   $('#text-input').value = '';
   $('#file-status').innerHTML = '';
   $('#receipt-note').value = '';
+  $('#receipt-date').value = '';
   $('#calc-alert-area').innerHTML = '';
   $('#result-area').innerHTML = '';
   ultimoCalculo = null;
@@ -559,7 +565,7 @@ function renderHistorico(){
   $$('.hist-item', el).forEach(item=>{
     item.addEventListener('click', ()=>{
       const idx = parseInt(item.dataset.idx);
-      abrirDetalheHistorico(historico[idx]);
+      abrirDetalheHistorico(historico[idx], idx);
     });
   });
   $('#btn-limpar-historico').addEventListener('click', ()=>{
@@ -575,7 +581,7 @@ function renderHistorico(){
   });
 }
 
-function abrirDetalheHistorico(calc){
+function abrirDetalheHistorico(calc, idx){
   let html = '<div class="modal-back" id="detail-back"><div class="modal" style="max-width:440px; max-height:82vh; overflow-y:auto;">';
   html += '<h3>'+(calc.nota?escapeHtml(calc.nota):'Recibo')+'</h3>';
   html += '<p style="margin-top:-6px;">'+fmtDateShort(calc.data)+' · '+calc.qtdTotal+' peças</p>';
@@ -591,12 +597,117 @@ function abrirDetalheHistorico(calc){
   });
   html += '</div>';
   html += '<div class="receipt-total" style="padding-left:0; padding-right:0;"><span class="tlabel">Total</span><span class="tvalue">'+fmtMoney(calc.total)+'</span></div>';
-  html += '<div class="row-actions"><button class="btn btn-ghost" id="btn-compartilhar-detalhe">Compartilhar</button><button class="btn btn-ghost" id="btn-fechar-detalhe" style="margin-left:auto;">Fechar</button></div>';
+  html += '<div id="detalhe-alert"></div>';
+  html += '<div class="row-actions">'
+    + '<button class="btn btn-ghost" id="btn-compartilhar-detalhe">Compartilhar</button>'
+    + '<button class="btn btn-ghost" id="btn-editar-detalhe">Editar</button>'
+    + '<button class="btn btn-danger" id="btn-excluir-detalhe">Excluir</button>'
+    + '<button class="btn btn-ghost" id="btn-fechar-detalhe" style="margin-left:auto;">Fechar</button>'
+    + '</div>';
   html += '</div></div>';
   $('#modal-root').innerHTML = html;
   $('#detail-back').addEventListener('click', (e)=>{ if(e.target.id==='detail-back') $('#modal-root').innerHTML=''; });
   $('#btn-fechar-detalhe').addEventListener('click', ()=>{ $('#modal-root').innerHTML=''; });
   $('#btn-compartilhar-detalhe').addEventListener('click', ()=>shareRecibo(calc));
+  $('#btn-editar-detalhe').addEventListener('click', ()=>abrirEdicaoRecibo(calc, idx));
+  $('#btn-excluir-detalhe').addEventListener('click', ()=>{
+    confirmModal('Excluir este recibo?', 'Isso apaga o recibo'+(calc.nota?' "'+calc.nota+'"':'')+' ('+fmtMoney(calc.total)+', '+calc.qtdTotal+' peças) do histórico. Essa ação não pode ser desfeita.', async ()=>{
+      try{
+        await api.excluirRecibo(calc.id);
+        historico.splice(idx, 1);
+        $('#modal-root').innerHTML = '';
+        renderHistorico();
+        showToast('Recibo excluído.');
+      }catch(e){
+        abrirDetalheHistorico(calc, idx);
+        $('#detalhe-alert').innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
+      }
+    });
+  });
+}
+
+// ---------- edição de recibo salvo ----------
+function abrirEdicaoRecibo(calc, idx){
+  const dataInputVal = (calc.data || '').slice(0, 10); // ISO -> AAAA-MM-DD
+  let html = '<div class="modal-back" id="edit-back"><div class="modal" style="max-width:480px; max-height:86vh; overflow-y:auto;">';
+  html += '<h3>Editar recibo</h3>';
+  html += '<div class="field"><label class="field-label">Nota</label><input type="text" id="ed-nota" value="'+escapeAttr(calc.nota||'')+'"></div>';
+  html += '<div class="field"><label class="field-label">Data</label><input type="date" id="ed-data" value="'+dataInputVal+'"></div>';
+  html += '<div class="table-scroll" style="max-height:280px;"><table><thead><tr>'
+    + '<th style="width:60px;">Código</th><th>Produto</th><th style="width:70px;">Qtd</th><th style="width:80px;">Preço</th><th style="width:28px;"></th>'
+    + '</tr></thead><tbody id="ed-itens-tbody">';
+  calc.itens.forEach((it, i)=>{
+    html += '<tr data-i="'+i+'">'
+      + '<td class="tcode">'+escapeHtml(it.codigo)+'</td>'
+      + '<td><input type="text" data-field="nome" value="'+escapeAttr(it.nome||'')+'"></td>'
+      + '<td><input type="text" data-field="quantidade" value="'+it.quantidade+'"></td>'
+      + '<td class="tprice"><input type="text" data-field="preco" value="'+it.preco.toFixed(2)+'"></td>'
+      + '<td><button class="del-btn" title="Remover linha">✕</button></td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div class="receipt-total" style="padding-left:0; padding-right:0;"><span class="tlabel">Novo total</span><span class="tvalue" id="ed-total-preview">'+fmtMoney(calc.total)+'</span></div>';
+  html += '<div id="ed-alert"></div>';
+  html += '<div class="row-actions"><button class="btn btn-ghost" id="ed-cancelar">Cancelar</button><button class="btn btn-primary" id="ed-salvar" style="margin-left:auto;">Salvar alterações</button></div>';
+  html += '</div></div>';
+  $('#modal-root').innerHTML = html;
+
+  const tbody = $('#ed-itens-tbody');
+
+  function recalcularPreview(){
+    let total = 0;
+    $$('tr', tbody).forEach(tr=>{
+      const qtd = parseFloat($('input[data-field=quantidade]', tr).value.replace(',','.')) || 0;
+      const preco = parseFloat($('input[data-field=preco]', tr).value.replace(',','.')) || 0;
+      total += qtd * preco;
+    });
+    $('#ed-total-preview').textContent = fmtMoney(total);
+  }
+  $$('input', tbody).forEach(inp=>inp.addEventListener('input', recalcularPreview));
+  $$('.del-btn', tbody).forEach(btn=>{
+    btn.addEventListener('click', ()=>{ btn.closest('tr').remove(); recalcularPreview(); });
+  });
+
+  $('#edit-back').addEventListener('click', (e)=>{ if(e.target.id==='edit-back') $('#modal-root').innerHTML=''; });
+  $('#ed-cancelar').addEventListener('click', ()=>abrirDetalheHistorico(calc, idx));
+
+  $('#ed-salvar').addEventListener('click', async ()=>{
+    const alertEl = $('#ed-alert');
+    const data = $('#ed-data').value;
+    if(!data){ alertEl.innerHTML = '<div class="alert alert-warn">Informe a data.</div>'; return; }
+    const itens = [];
+    for(const tr of $$('tr', tbody)){
+      const codigo = tr.querySelector('.tcode').textContent.trim();
+      const nome = $('input[data-field=nome]', tr).value.trim();
+      const quantidade = parseFloat($('input[data-field=quantidade]', tr).value.replace(',','.'));
+      const preco = parseFloat($('input[data-field=preco]', tr).value.replace(',','.'));
+      if(isNaN(quantidade) || isNaN(preco)){
+        alertEl.innerHTML = '<div class="alert alert-warn">Tem quantidade ou preço inválido em alguma linha.</div>';
+        return;
+      }
+      itens.push({codigo, nome, quantidade, preco});
+    }
+    if(!itens.length){
+      alertEl.innerHTML = '<div class="alert alert-warn">O recibo precisa ter pelo menos um item — ou exclua o recibo inteiro.</div>';
+      return;
+    }
+    const btn = $('#ed-salvar');
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    try{
+      const salvo = await api.editarRecibo(calc.id, {nota: $('#ed-nota').value.trim(), data, itens});
+      const atualizado = {
+        id: salvo.id, data: salvo.data, nota: salvo.nota,
+        itens: salvo.itens, total: salvo.total, qtdTotal: salvo.qtd_total,
+      };
+      historico[idx] = atualizado;
+      $('#modal-root').innerHTML = '';
+      renderHistorico();
+      showToast('Recibo atualizado.');
+    }catch(e){
+      alertEl.innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
+      btn.disabled = false; btn.textContent = 'Salvar alterações';
+    }
+  });
 }
 
 // ---------- confirm modal ----------

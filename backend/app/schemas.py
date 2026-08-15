@@ -43,6 +43,11 @@ class SalvarReciboRequest(BaseModel):
     itens: List[ItemCalculado]
     total: float
     qtd_total: float
+    data: Optional[str] = None
+    """Data do recibo em si (ex: quando o lote foi produzido), no formato
+    AAAA-MM-DD. Opcional — pra digitalizar recibos de papel atrasados sem
+    que eles entrem no resumo do mês errado. Se omitido, usa a data/hora
+    de agora (o comportamento de sempre, pra recibo lançado no mesmo dia)."""
 
 
 class Recibo(BaseModel):
@@ -52,3 +57,18 @@ class Recibo(BaseModel):
     itens: List[ItemCalculado]
     total: float
     qtd_total: float
+
+
+class ItemReciboInput(BaseModel):
+    """Um item enviado ao editar um recibo já salvo — subtotal não vem daqui,
+    o backend recalcula (nunca confia no total que o cliente mandou)."""
+    codigo: str
+    nome: Optional[str] = None
+    quantidade: float
+    preco: float
+
+
+class EditarReciboRequest(BaseModel):
+    nota: Optional[str] = None
+    data: str
+    itens: List[ItemReciboInput]

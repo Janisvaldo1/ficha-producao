@@ -161,7 +161,13 @@ def calcular_recibo(req: schemas.CalcularRequest):
 def salvar_recibo(req: schemas.SalvarReciboRequest):
     conn = get_db()
     try:
-        data_iso = datetime.now().isoformat()
+        if req.data:
+            try:
+                data_iso = datetime.fromisoformat(req.data).isoformat()
+            except ValueError:
+                raise HTTPException(400, "Data inválida — use o formato AAAA-MM-DD.")
+        else:
+            data_iso = datetime.now().isoformat()
         cur = conn.execute(
             "INSERT INTO recibos (data, nota, total, qtd_total) VALUES (?, ?, ?, ?)",
             (data_iso, req.nota, req.total, req.qtd_total),
@@ -208,6 +214,56 @@ def limpar_historico():
     conn = get_db()
     try:
         conn.execute("DELETE FROM recibos")
+        conn.commit()
+        return {"ok": True}
+    finally:
+        conn.close()
+
+
+@app.put("/api/recibos/{recibo_id}", response_model=schemas.Recibo)
+def editar_recibo(recibo_id: int, req: schemas.EditarReciboRequest):
+    """Corrige um recibo já salvo: nota, data, quantidade/preço de cada item,
+    ou remove uma linha (o front manda a lista de itens já sem ela). O
+    subtotal e o total nunca vêm do cliente — são sempre recalculados aqui."""
+    conn = get_db()
+    try:
+        existe = conn.execute("SELECT 1 FROM recibos WHERE id=?", (recibo_id,)).fetchone()
+        if not existe:
+            raise HTTPException(404, f"Recibo {recibo_id} não encontrado.")
+        try:
+            data_iso = datetime.fromisoformat(req.data).isoformat()
+        except ValueError:
+            raise HTTPException(400, "Data inválida — use o formato AAAA-MM-DD.")
+
+        total = sum(it.preco * it.quantidade for it in req.itens)
+        qtd_total = sum(it.quantidade for it in req.itens)
+
+        conn.execute(
+            "UPDATE recibos SET data=?, nota=?, total=?, qtd_total=? WHERE id=?",
+            (data_iso, req.nota, total, qtd_total, recibo_id),
+        )
+        conn.execute("DELETE FROM itens_recibo WHERE recibo_id=?", (recibo_id,))
+        for it in req.itens:
+            subtotal = it.preco * it.quantidade
+            conn.execute(
+                """INSERT INTO itens_recibo (recibo_id, codigo, nome, quantidade, preco, subtotal, ok)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (recibo_id, it.codigo, it.nome, it.quantidade, it.preco, subtotal, int(bool(it.nome))),
+            )
+        conn.commit()
+        return _montar_recibo(conn, recibo_id)
+    finally:
+        conn.close()
+
+
+@app.delete("/api/recibos/{recibo_id}")
+def excluir_recibo(recibo_id: int):
+    conn = get_db()
+    try:
+        existe = conn.execute("SELECT 1 FROM recibos WHERE id=?", (recibo_id,)).fetchone()
+        if not existe:
+            raise HTTPException(404, f"Recibo {recibo_id} não encontrado.")
+        conn.execute("DELETE FROM recibos WHERE id=?", (recibo_id,))
         conn.commit()
         return {"ok": True}
     finally:
