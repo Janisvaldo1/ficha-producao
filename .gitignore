@@ -1,0 +1,14 @@
+# Python
+backend/venv/
+__pycache__/
+*.pyc
+
+# Banco de dados (gerado em runtime a partir do seed — não versiona dado, só schema/código)
+backend/ficha.db
+
+# Logs locais de desenvolvimento
+*.log
+
+# SO
+.DS_Store
+Thumbs.db

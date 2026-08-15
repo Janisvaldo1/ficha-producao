@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha de Produção — J J Marmorite</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div>
+      <p class="brand-eyebrow">Ficha de Produção</p>
+      <h1 class="brand-title">J J Marmorite</h1>
+      <p class="brand-sub">Confere código, soma quantidade × preço, guarda o histórico.</p>
+    </div>
+    <div class="stamp" id="today-stamp">—</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="calc"><span class="num">01</span>Calcular</button>
+    <button class="tab-btn" data-tab="produtos"><span class="num">02</span>Tabela de preços</button>
+    <button class="tab-btn" data-tab="historico"><span class="num">03</span>Histórico</button>
+  </div>
+
+  <!-- ===== TAB: CALCULAR ===== -->
+  <div class="panel active" id="panel-calc">
+    <div class="card">
+      <h2>Novo recibo</h2>
+      <p class="hint">Solte o arquivo .xlsx do recibo, ou digite os códigos e quantidades à mão.</p>
+
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-file-btn">Arquivo .xlsx</button>
+        <button class="mode-btn" id="mode-text-btn">Digitar / colar</button>
+      </div>
+
+      <div id="mode-file">
+        <div class="dropzone" id="dropzone">
+          <div class="icon">📎</div>
+          <div class="label"><b>Clique para escolher</b> ou arraste o arquivo aqui</div>
+          <input type="file" id="file-input" accept=".xlsx,.xls">
+        </div>
+        <div id="file-status"></div>
+      </div>
+
+      <div id="mode-text" style="display:none;">
+        <textarea id="text-input" placeholder="0623, 10&#10;0462, 5&#10;0134  15&#10;...&#10;&#10;um item por linha: código e quantidade"></textarea>
+      </div>
+
+      <div class="field" style="margin-top:14px;">
+        <label class="field-label">Nota (opcional — ex: nome do lote, encomenda)</label>
+        <input type="text" id="receipt-note" placeholder="Ex: Recibo nº 2485">
+      </div>
+
+      <div id="calc-alert-area"></div>
+
+      <div class="row-actions">
+        <button class="btn btn-primary" id="btn-calcular">Calcular valor</button>
+        <button class="btn btn-ghost" id="btn-limpar">Limpar</button>
+      </div>
+    </div>
+
+    <div id="result-area"></div>
+  </div>
+
+  <!-- ===== TAB: PRODUTOS ===== -->
+  <div class="panel" id="panel-produtos">
+    <div class="card">
+      <h2>Tabela de preços</h2>
+      <p class="hint">Editável — clique em qualquer campo para ajustar. Muda pouco, mas quando mudar, atualiza aqui.</p>
+      <div class="search-bar">
+        <input type="text" id="produto-search" placeholder="Buscar por código ou nome...">
+        <button class="btn btn-primary btn-sm" id="btn-add-produto">+ Produto</button>
+      </div>
+      <div id="produtos-alert"></div>
+      <div class="table-scroll">
+        <table id="produtos-table">
+          <thead><tr><th style="width:70px;">Código</th><th>Produto</th><th style="width:90px;">Preço</th><th style="width:34px;"></th></tr></thead>
+          <tbody id="produtos-tbody"></tbody>
+        </table>
+      </div>
+      <div class="row-actions">
+        <span style="font-size:12px; color:var(--ink-soft); align-self:center;" id="produtos-count"></span>
+        <button class="btn btn-ghost btn-sm" id="btn-restaurar-catalogo" style="margin-left:auto;">Restaurar tabela original</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: HISTÓRICO ===== -->
+  <div class="panel" id="panel-historico">
+    <div id="historico-content">
+      <div class="empty"><span class="spinner"></span> carregando histórico...</div>
+    </div>
+  </div>
+
+</div>
+
+<div id="modal-root"></div>
+<div class="toast" id="toast"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
