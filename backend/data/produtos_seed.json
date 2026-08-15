@@ -12,7 +12,7 @@
   {
     "codigo": "0092",
     "nome": "Shiva Nataraja",
-    "preco": 16.8
+    "preco": 25.0
   },
   {
     "codigo": "0095",
@@ -27,42 +27,42 @@
   {
     "codigo": "0126",
     "nome": "Buda Nepal Proteção G",
-    "preco": 6.25
+    "preco": 7.35
   },
   {
     "codigo": "0127",
     "nome": "Buda Nepal Proteção P",
-    "preco": 3.0
+    "preco": 4.0
   },
   {
     "codigo": "0128",
     "nome": "Buda Nepal Sabedoria M",
-    "preco": 5.6
+    "preco": 6.6
   },
   {
     "codigo": "0133",
     "nome": "Ganesha M",
-    "preco": 11.45
+    "preco": 12.5
   },
   {
     "codigo": "0134",
     "nome": "Ganesha P",
-    "preco": 4.6
+    "preco": 5.3
   },
   {
     "codigo": "0136",
     "nome": "Krishna Menino",
-    "preco": 7.0
+    "preco": 8.0
   },
   {
     "codigo": "0138",
     "nome": "Sarasvati",
-    "preco": 8.3
+    "preco": 12.0
   },
   {
     "codigo": "0140",
     "nome": "Incensário Canoa",
-    "preco": 4.3
+    "preco": 5.0
   },
   {
     "codigo": "0152",
@@ -72,17 +72,22 @@
   {
     "codigo": "0153",
     "nome": "Kuan Yin P",
-    "preco": 4.0
+    "preco": 4.6
   },
   {
     "codigo": "0154",
     "nome": "Flor de Lótus G",
-    "preco": 4.8
+    "preco": 5.5
   },
   {
     "codigo": "0155",
     "nome": "Flor de Lótus 1",
-    "preco": 4.35
+    "preco": 5.0
+  },
+  {
+    "codigo": "0156",
+    "nome": "Tara",
+    "preco": 15.0
   },
   {
     "codigo": "0158",
@@ -97,37 +102,37 @@
   {
     "codigo": "0160",
     "nome": "Cabeça",
-    "preco": 4.0
+    "preco": 5.0
   },
   {
     "codigo": "0161",
     "nome": "Elefante 02",
-    "preco": 8.35
+    "preco": 11.0
   },
   {
     "codigo": "0163",
     "nome": "Elefante 01",
-    "preco": 2.85
+    "preco": 4.0
   },
   {
     "codigo": "0167",
     "nome": "Mandala 01",
-    "preco": 16.0
+    "preco": 20.0
   },
   {
     "codigo": "0170",
     "nome": "Flor de Lótus 02",
-    "preco": 6.0
+    "preco": 6.5
   },
   {
     "codigo": "0171",
     "nome": "Flor de Lótus 03",
-    "preco": 7.7
+    "preco": 8.0
   },
   {
     "codigo": "0172",
     "nome": "Flor de Lótus 04",
-    "preco": 18.0
+    "preco": 20.0
   },
   {
     "codigo": "0173",
@@ -142,97 +147,97 @@
   {
     "codigo": "0176",
     "nome": "Gordo Prosperidade 01",
-    "preco": 3.0
+    "preco": 3.5
   },
   {
     "codigo": "0177",
     "nome": "Gordo Riqueza 01",
-    "preco": 3.0
+    "preco": 3.5
   },
   {
     "codigo": "0178",
     "nome": "Gordo Felicidade 01",
-    "preco": 3.0
+    "preco": 3.5
   },
   {
     "codigo": "0179",
     "nome": "Gordo Saúde 1",
-    "preco": 3.0
+    "preco": 3.5
   },
   {
     "codigo": "0182",
     "nome": "Gordo Paz 01",
-    "preco": 3.0
+    "preco": 3.5
   },
   {
     "codigo": "0183",
     "nome": "Gordo Fartura 01",
-    "preco": 3.0
+    "preco": 3.5
   },
   {
     "codigo": "0184",
     "nome": "Gordo Prosperidade 02",
-    "preco": 4.1
+    "preco": 5.0
   },
   {
     "codigo": "0185",
     "nome": "Gordo Riqueza 02",
-    "preco": 4.1
+    "preco": 5.0
   },
   {
     "codigo": "0186",
-    "nome": "Gordo Felicidade02",
-    "preco": 4.1
+    "nome": "Gordo Felicidade 02",
+    "preco": 5.0
   },
   {
     "codigo": "0187",
     "nome": "Gordo Saúde 2",
-    "preco": 4.1
+    "preco": 5.0
   },
   {
     "codigo": "0188",
     "nome": "Gordo Paz 02",
-    "preco": 4.1
+    "preco": 5.0
   },
   {
     "codigo": "0189",
     "nome": "Gordo Fartura 02",
-    "preco": 4.1
+    "preco": 5.0
   },
   {
     "codigo": "0190",
     "nome": "Mudra da Terra 01",
-    "preco": 3.0
+    "preco": 3.5
   },
   {
     "codigo": "0191",
     "nome": "Mudra da Benevolência 01",
-    "preco": 3.0
+    "preco": 3.5
   },
   {
     "codigo": "0192",
     "nome": "Mudra Meditação 01",
-    "preco": 3.0
+    "preco": 3.5
   },
   {
     "codigo": "0193",
     "nome": "Mudra Proteção 01",
-    "preco": 3.0
+    "preco": 3.5
   },
   {
     "codigo": "0194",
     "nome": "Mudra Sabedoria 01",
-    "preco": 3.0
+    "preco": 3.5
   },
   {
     "codigo": "0197",
     "nome": "Mudra Meditação 02",
-    "preco": 4.2
+    "preco": 5.0
   },
   {
     "codigo": "0218",
     "nome": "Ganesha 1",
-    "preco": 5.7
+    "preco": 6.0
   },
   {
     "codigo": "0219",
@@ -252,7 +257,7 @@
   {
     "codigo": "0222",
     "nome": "Buda Decorado 4",
-    "preco": 5.0
+    "preco": 5.5
   },
   {
     "codigo": "0223",
@@ -262,7 +267,7 @@
   {
     "codigo": "0224",
     "nome": "Buda Nepal PP",
-    "preco": 2.7
+    "preco": 3.1
   },
   {
     "codigo": "0225",
@@ -277,12 +282,12 @@
   {
     "codigo": "0227",
     "nome": "Tara Mini",
-    "preco": 4.8
+    "preco": 5.5
   },
   {
     "codigo": "0229",
     "nome": "Elefante Índia P",
-    "preco": 6.0
+    "preco": 7.0
   },
   {
     "codigo": "0230",
@@ -317,17 +322,17 @@
   {
     "codigo": "0239",
     "nome": "Flor de Pedra 4",
-    "preco": 3.75
+    "preco": 4.0
   },
   {
     "codigo": "0240",
     "nome": "Flor de Pedra 5",
-    "preco": 2.9
+    "preco": 3.5
   },
   {
     "codigo": "0249",
     "nome": "Mandala 2",
-    "preco": 19.0
+    "preco": 22.0
   },
   {
     "codigo": "0271",
@@ -342,7 +347,7 @@
   {
     "codigo": "0281",
     "nome": "Ganesha Folha P",
-    "preco": 4.9
+    "preco": 5.0
   },
   {
     "codigo": "0282",
@@ -352,12 +357,12 @@
   {
     "codigo": "0283",
     "nome": "Ganesha PP",
-    "preco": 2.7
+    "preco": 3.1
   },
   {
     "codigo": "0284",
     "nome": "Ganesha Mini",
-    "preco": 2.5
+    "preco": 2.9
   },
   {
     "codigo": "0287",
@@ -377,17 +382,17 @@
   {
     "codigo": "0292",
     "nome": "Radha e Krishna",
-    "preco": 4.4
+    "preco": 4.8
   },
   {
     "codigo": "0297",
-    "nome": "Flor da Let G",
+    "nome": "Flor da Lét G",
     "preco": 7.5
   },
   {
     "codigo": "0320",
     "nome": "Pote Estrela 5 Pontas",
-    "preco": 6.0
+    "preco": 6.5
   },
   {
     "codigo": "0344",
@@ -397,22 +402,22 @@
   {
     "codigo": "0345",
     "nome": "Cabeça Shiva P",
-    "preco": 4.2
+    "preco": 4.5
   },
   {
     "codigo": "0346",
     "nome": "Menino na Mão",
-    "preco": 4.85
+    "preco": 5.0
   },
   {
     "codigo": "0353",
     "nome": "Maitreya",
-    "preco": 4.8
+    "preco": 5.5
   },
   {
     "codigo": "0354",
     "nome": "Mão P Porta Vela",
-    "preco": 4.4
+    "preco": 4.5
   },
   {
     "codigo": "0356",
@@ -432,12 +437,12 @@
   {
     "codigo": "0359",
     "nome": "Kuan Yin em pé com esplendor",
-    "preco": 4.5
+    "preco": 5.0
   },
   {
     "codigo": "0360",
     "nome": "Kuan Yin Ajoelhada",
-    "preco": 4.3
+    "preco": 4.5
   },
   {
     "codigo": "0361",
@@ -447,7 +452,7 @@
   {
     "codigo": "0362",
     "nome": "Kuan Yin Sentada",
-    "preco": 4.2
+    "preco": 4.5
   },
   {
     "codigo": "0363",
@@ -462,32 +467,32 @@
   {
     "codigo": "0379",
     "nome": "Ganesha em Nataraja P",
-    "preco": 5.0
+    "preco": 6.0
   },
   {
     "codigo": "0383",
     "nome": "Buda Mudra 04 Proteção",
-    "preco": 5.9
+    "preco": 8.0
   },
   {
     "codigo": "0384",
     "nome": "Buda Mudra 04 Sabedoria",
-    "preco": 5.9
+    "preco": 8.0
   },
   {
     "codigo": "0385",
     "nome": "Buda Mudra 04 Meditação",
-    "preco": 5.9
+    "preco": 8.0
   },
   {
     "codigo": "0386",
     "nome": "Buda Mudra 04 da Terra",
-    "preco": 5.9
+    "preco": 8.0
   },
   {
     "codigo": "0387",
     "nome": "Buda Mudra 04 Benevolência",
-    "preco": 5.9
+    "preco": 8.0
   },
   {
     "codigo": "0402",
@@ -506,8 +511,8 @@
   },
   {
     "codigo": "0410",
-    "nome": "Quadro Rosto Buda 1",
-    "preco": 6.5
+    "nome": "Quadro Rosto Buda",
+    "preco": 16.5
   },
   {
     "codigo": "0411",
@@ -527,12 +532,12 @@
   {
     "codigo": "0417",
     "nome": "Flor para Vela",
-    "preco": 4.6
+    "preco": 5.0
   },
   {
     "codigo": "0418",
     "nome": "Quadro 3 Budas",
-    "preco": 14.0
+    "preco": 19.5
   },
   {
     "codigo": "0419",
@@ -542,42 +547,42 @@
   {
     "codigo": "0421",
     "nome": "Monge Mini pensativo",
-    "preco": 3.1
+    "preco": 4.0
   },
   {
     "codigo": "0422",
     "nome": "Monge Mini Oração",
-    "preco": 3.1
+    "preco": 4.0
   },
   {
     "codigo": "0423",
     "nome": "Monge Mini Meditação",
-    "preco": 3.1
+    "preco": 4.0
   },
   {
     "codigo": "0424",
     "nome": "Monge Mini Paz",
-    "preco": 3.1
+    "preco": 4.0
   },
   {
     "codigo": "0425",
     "nome": "Monge Mini Tambor",
-    "preco": 3.1
+    "preco": 4.0
   },
   {
     "codigo": "0426",
     "nome": "Monge Mini Mãos",
-    "preco": 3.1
+    "preco": 4.0
   },
   {
     "codigo": "0433",
     "nome": "Hanuman Hindu",
-    "preco": 8.0
+    "preco": 10.0
   },
   {
     "codigo": "0442",
     "nome": "Conjunto carequinha",
-    "preco": 8.55
+    "preco": 10.0
   },
   {
     "codigo": "0447",
@@ -592,7 +597,7 @@
   {
     "codigo": "0450",
     "nome": "Flor de Lótus Vela M",
-    "preco": 3.2
+    "preco": 3.5
   },
   {
     "codigo": "0451",
@@ -602,7 +607,7 @@
   {
     "codigo": "0452",
     "nome": "Cabeça P",
-    "preco": 3.5
+    "preco": 5.0
   },
   {
     "codigo": "0459",
@@ -617,7 +622,7 @@
   {
     "codigo": "0461",
     "nome": "Flor Dupla",
-    "preco": 3.0
+    "preco": 3.3
   },
   {
     "codigo": "0462",
@@ -627,12 +632,12 @@
   {
     "codigo": "0463",
     "nome": "Krishna PP",
-    "preco": 2.8
+    "preco": 3.1
   },
   {
     "codigo": "0464",
     "nome": "Shiva Nataraja P",
-    "preco": 8.0
+    "preco": 9.5
   },
   {
     "codigo": "0468",
@@ -642,52 +647,47 @@
   {
     "codigo": "0469",
     "nome": "Trio Careca",
-    "preco": 7.8
+    "preco": 8.4
   },
   {
     "codigo": "0472",
-    "nome": "Monge em Pe Oração p",
-    "preco": 5.0
+    "nome": "Monge em Pé Oração P",
+    "preco": 6.0
   },
   {
     "codigo": "0473",
     "nome": "Monge Sorrindo Oração P",
-    "preco": 5.0
+    "preco": 6.0
   },
   {
     "codigo": "0474",
     "nome": "Monge sorrindo Meditação P",
-    "preco": 5.0
+    "preco": 6.0
   },
   {
     "codigo": "0496",
     "nome": "Ganesha M na Lotus",
-    "preco": 5.5
+    "preco": 8.0
   },
   {
     "codigo": "0500",
     "nome": "Monge não falo",
-    "preco": 5.0
+    "preco": 6.0
   },
   {
     "codigo": "0502",
     "nome": "Monge não escuto",
-    "preco": 5.0
+    "preco": 6.0
   },
   {
     "codigo": "0503",
     "nome": "Monge com terço PQ",
-    "preco": 5.0
-  },
-  {
-    "codigo": "0518",
-    "nome": "Monge não vejo",
-    "preco": 5.0
+    "preco": 6.0
   },
   {
     "codigo": "0511",
     "nome": "Shiva Nataraja Novo",
-    "preco": 21.5
+    "preco": 30.0
   },
   {
     "codigo": "0512",
@@ -702,17 +702,22 @@
   {
     "codigo": "0516",
     "nome": "Trio Careca",
-    "preco": 10.5
+    "preco": 15.0
+  },
+  {
+    "codigo": "0518",
+    "nome": "Monge não vejo",
+    "preco": 6.0
   },
   {
     "codigo": "0524",
     "nome": "Mandala Árvore da Vida",
-    "preco": 15.0
+    "preco": 18.0
   },
   {
     "codigo": "0525",
     "nome": "Mandala OM",
-    "preco": 14.5
+    "preco": 18.0
   },
   {
     "codigo": "0526",
@@ -732,37 +737,37 @@
   {
     "codigo": "0530",
     "nome": "Careca Músico",
-    "preco": 3.3
+    "preco": 4.0
   },
   {
     "codigo": "0531",
     "nome": "Careca Escritor",
-    "preco": 3.3
+    "preco": 4.0
   },
   {
     "codigo": "0532",
     "nome": "Careca Feliz",
-    "preco": 3.3
+    "preco": 4.0
   },
   {
     "codigo": "0533",
     "nome": "Monge PQ não vejo",
-    "preco": 3.8
+    "preco": 5.0
   },
   {
     "codigo": "0534",
     "nome": "Monge PQ não falo",
-    "preco": 3.8
+    "preco": 5.0
   },
   {
     "codigo": "0535",
     "nome": "Monge PQ não escuto",
-    "preco": 3.8
+    "preco": 5.0
   },
   {
     "codigo": "0538",
     "nome": "Tara PQ",
-    "preco": 6.0
+    "preco": 7.0
   },
   {
     "codigo": "0539",
@@ -777,7 +782,7 @@
   {
     "codigo": "0543",
     "nome": "Lakshmi mini",
-    "preco": 3.6
+    "preco": 4.0
   },
   {
     "codigo": "0544",
@@ -797,7 +802,7 @@
   {
     "codigo": "0566",
     "nome": "Monges Sábios",
-    "preco": 5.0
+    "preco": 6.0
   },
   {
     "codigo": "0567",
@@ -817,56 +822,291 @@
   {
     "codigo": "0594",
     "nome": "Ganesha Tambor",
-    "preco": 3.6
+    "preco": 4.0
   },
   {
     "codigo": "0595",
     "nome": "Ganesha Flauta",
-    "preco": 3.6
+    "preco": 4.0
   },
   {
     "codigo": "0596",
     "nome": "Ganesha Trompete",
-    "preco": 3.6
+    "preco": 4.0
   },
   {
     "codigo": "0597",
     "nome": "Ganesha Harpa",
-    "preco": 3.6
+    "preco": 4.0
   },
   {
     "codigo": "0598",
     "nome": "Ganesha 3",
-    "preco": 5.2
+    "preco": 6.0
   },
   {
     "codigo": "0599",
     "nome": "Incensario Estrela de Davi",
-    "preco": 2.8
+    "preco": 3.2
   },
   {
     "codigo": "0605",
     "nome": "São Francisco em Pé",
-    "preco": 8.5
+    "preco": 10.0
   },
   {
     "codigo": "0606",
     "nome": "Buda Orando P",
-    "preco": 6.0
+    "preco": 8.5
   },
   {
     "codigo": "0608",
     "nome": "Monge Careca em Pe Orando",
-    "preco": 6.0
+    "preco": 7.0
   },
   {
     "codigo": "0609",
     "nome": "Monge em Pe Mão na Cabeça",
-    "preco": 6.0
+    "preco": 7.0
   },
   {
     "codigo": "0610",
-    "nome": "Monge em Pé Coração",
+    "nome": "Monge em Pe Coração",
+    "preco": 7.0
+  },
+  {
+    "codigo": "0622",
+    "nome": "Buda porta vela Benevolência",
+    "preco": 8.5
+  },
+  {
+    "codigo": "0623",
+    "nome": "Buda porta vela oração",
+    "preco": 8.5
+  },
+  {
+    "codigo": "0624",
+    "nome": "Sarasvati nova",
+    "preco": 20.0
+  },
+  {
+    "codigo": "0637",
+    "nome": "shiva nataraja c/ neon",
+    "preco": 30.0
+  },
+  {
+    "codigo": "0638",
+    "nome": "Quadro c/ Buda p",
     "preco": 6.0
+  },
+  {
+    "codigo": "0639",
+    "nome": "Quadro c/ Rama Sita",
+    "preco": 10.0
+  },
+  {
+    "codigo": "0640",
+    "nome": "Quadro c/ Ganesha",
+    "preco": 10.0
+  },
+  {
+    "codigo": "0645",
+    "nome": "São Francisco Sentado",
+    "preco": 12.5
+  },
+  {
+    "codigo": "0648",
+    "nome": "Coruja G",
+    "preco": 7.5
+  },
+  {
+    "codigo": "0649",
+    "nome": "Radha e Krishna M",
+    "preco": 6.5
+  },
+  {
+    "codigo": "0650",
+    "nome": "Incensario c/ Buda",
+    "preco": 4.0
+  },
+  {
+    "codigo": "0651",
+    "nome": "Incensario Mão de hans",
+    "preco": 4.0
+  },
+  {
+    "codigo": "0654",
+    "nome": "Monge Abraço P",
+    "preco": 6.5
+  },
+  {
+    "codigo": "0656",
+    "nome": "Monge Feliz Oração P",
+    "preco": 4.0
+  },
+  {
+    "codigo": "0657",
+    "nome": "Monge Feliz Meditação",
+    "preco": 4.0
+  },
+  {
+    "codigo": "0658",
+    "nome": "Careca Meditação",
+    "preco": 6.5
+  },
+  {
+    "codigo": "0659",
+    "nome": "Careca Oração",
+    "preco": 6.5
+  },
+  {
+    "codigo": "0660",
+    "nome": "Trio Sábios Feliz",
+    "preco": 15.0
+  },
+  {
+    "codigo": "0667",
+    "nome": "Shiva Linga",
+    "preco": 6.5
+  },
+  {
+    "codigo": "0668",
+    "nome": "Arcanjo Miguel",
+    "preco": 16.5
+  },
+  {
+    "codigo": "0669",
+    "nome": "Arcanjo Gabriel",
+    "preco": 12.5
+  },
+  {
+    "codigo": "0670",
+    "nome": "Arcanjo Rafael",
+    "preco": 12.5
+  },
+  {
+    "codigo": "0671",
+    "nome": "N.Senhors das Graças",
+    "preco": 16.5
+  },
+  {
+    "codigo": "0672",
+    "nome": "N. Senhora da Conceição",
+    "preco": 15.0
+  },
+  {
+    "codigo": "0674",
+    "nome": "Shiva sentado P",
+    "preco": 10.5
+  },
+  {
+    "codigo": "0678",
+    "nome": "Mão de Buda",
+    "preco": 12.0
+  },
+  {
+    "codigo": "0695",
+    "nome": "Monge Porta vela",
+    "preco": 7.0
+  },
+  {
+    "codigo": "0696",
+    "nome": "Monge Folha Vela",
+    "preco": 5.5
+  },
+  {
+    "codigo": "0697",
+    "nome": "Monge Porta Coisas",
+    "preco": 7.0
+  },
+  {
+    "codigo": "0698",
+    "nome": "Incensario Mandala",
+    "preco": 4.7
+  },
+  {
+    "codigo": "0699",
+    "nome": "Incensário/Def./Vela/Alto",
+    "preco": 3.5
+  },
+  {
+    "codigo": "0700",
+    "nome": "Incensário/ Def./ Vela / Baixo",
+    "preco": 3.5
+  },
+  {
+    "codigo": "0761",
+    "nome": "Jesus",
+    "preco": 18.0
+  },
+  {
+    "codigo": "0763",
+    "nome": "Luz de Jesus com resplendor",
+    "preco": 18.0
+  },
+  {
+    "codigo": "0764",
+    "nome": "Luz de Jesus sem resplendor",
+    "preco": 18.0
+  },
+  {
+    "codigo": "0765",
+    "nome": "N* Senhora de Fatima",
+    "preco": 17.0
+  },
+  {
+    "codigo": "0766",
+    "nome": "Luz de Fatima c/ Resplendor",
+    "preco": 17.0
+  },
+  {
+    "codigo": "0767",
+    "nome": "Luz de Fatima s/ Resplendor",
+    "preco": 17.0
+  },
+  {
+    "codigo": "0768",
+    "nome": "Santo Antonio de Lisboa",
+    "preco": 10.0
+  },
+  {
+    "codigo": "0769",
+    "nome": "Luz de Santo Antonio",
+    "preco": 10.0
+  },
+  {
+    "codigo": "0771",
+    "nome": "Santa Barbara",
+    "preco": 18.0
+  },
+  {
+    "codigo": "0772",
+    "nome": "Luz de Anjo",
+    "preco": 16.0
+  },
+  {
+    "codigo": "0774",
+    "nome": "N* Senhora da Paz",
+    "preco": 16.0
+  },
+  {
+    "codigo": "0824",
+    "nome": "Incensario Monge",
+    "preco": 5.5
+  },
+  {
+    "codigo": "0825",
+    "nome": "Ganesha Folha Vela",
+    "preco": 5.0
+  },
+  {
+    "codigo": "0826",
+    "nome": "Buda Folha Vela",
+    "preco": 5.0
+  },
+  {
+    "codigo": "0827",
+    "nome": "Mãe Rainha",
+    "preco": 4.5
   }
 ]
