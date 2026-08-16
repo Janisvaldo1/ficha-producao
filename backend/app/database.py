@@ -188,7 +188,7 @@ class _ConnectionWrapper:
     def executemany(self, query: str, seq):
         """Executa uma query múltiplas vezes."""
         if self.is_postgres:
-            query, _ = _adapt_query_for_postgres(query)
+            query, _, _ = _adapt_query_for_postgres(query)
             cur = self._conn.cursor()
             for params in seq:
                 cur.execute(query, params)
