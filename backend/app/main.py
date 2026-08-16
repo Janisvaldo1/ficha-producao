@@ -169,8 +169,8 @@ def salvar_recibo(req: schemas.SalvarReciboRequest):
         else:
             data_iso = datetime.now().isoformat()
         cur = conn.execute(
-            "INSERT INTO recibos (data, nota, total, qtd_total) VALUES (?, ?, ?, ?)",
-            (data_iso, req.nota, req.total, req.qtd_total),
+            "INSERT INTO recibos (data, nota, encomenda, total, qtd_total) VALUES (?, ?, ?, ?, ?)",
+            (data_iso, req.nota, (req.encomenda or None), req.total, req.qtd_total),
         )
         recibo_id = cur.lastrowid
         for it in req.itens:
@@ -195,8 +195,8 @@ def _montar_recibo(conn, recibo_id: int) -> schemas.Recibo:
         codigo=i["codigo"], nome=i["nome"], quantidade=i["quantidade"],
         preco=i["preco"], subtotal=i["subtotal"], ok=bool(i["ok"]),
     ) for i in itens_rows]
-    return schemas.Recibo(id=r["id"], data=r["data"], nota=r["nota"], itens=itens,
-                           total=r["total"], qtd_total=r["qtd_total"])
+    return schemas.Recibo(id=r["id"], data=r["data"], nota=r["nota"], encomenda=r["encomenda"],
+                           itens=itens, total=r["total"], qtd_total=r["qtd_total"])
 
 
 @app.get("/api/recibos", response_model=List[schemas.Recibo])
@@ -239,8 +239,8 @@ def editar_recibo(recibo_id: int, req: schemas.EditarReciboRequest):
         qtd_total = sum(it.quantidade for it in req.itens)
 
         conn.execute(
-            "UPDATE recibos SET data=?, nota=?, total=?, qtd_total=? WHERE id=?",
-            (data_iso, req.nota, total, qtd_total, recibo_id),
+            "UPDATE recibos SET data=?, nota=?, encomenda=?, total=?, qtd_total=? WHERE id=?",
+            (data_iso, req.nota, (req.encomenda or None), total, qtd_total, recibo_id),
         )
         conn.execute("DELETE FROM itens_recibo WHERE recibo_id=?", (recibo_id,))
         for it in req.itens:
@@ -266,6 +266,19 @@ def excluir_recibo(recibo_id: int):
         conn.execute("DELETE FROM recibos WHERE id=?", (recibo_id,))
         conn.commit()
         return {"ok": True}
+    finally:
+        conn.close()
+
+
+@app.put("/api/encomendas/renomear")
+def renomear_encomenda(req: schemas.RenomearEncomendaRequest):
+    """Renomeia uma encomenda em todos os recibos que pertencem a ela de uma
+    vez — usado pelo botão "Alterar" no rodapé de cada grupo do histórico."""
+    conn = get_db()
+    try:
+        cur = conn.execute("UPDATE recibos SET encomenda=? WHERE encomenda=?", (req.para, req.de))
+        conn.commit()
+        return {"ok": True, "recibos_afetados": cur.rowcount}
     finally:
         conn.close()
 

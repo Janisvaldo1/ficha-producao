@@ -40,6 +40,9 @@ class SalvarReciboRequest(BaseModel):
     """O que o front manda pra persistir um recibo já calculado (nota + os itens
     calculados, incluindo nome/preço já "congelados" no momento do cálculo)."""
     nota: Optional[str] = None
+    encomenda: Optional[str] = None
+    """Nome/número da encomenda, pra agrupar vários recibos que pertencem ao
+    mesmo pedido. Livre — sem encomenda, o recibo fica avulso."""
     itens: List[ItemCalculado]
     total: float
     qtd_total: float
@@ -54,6 +57,7 @@ class Recibo(BaseModel):
     id: int
     data: str
     nota: Optional[str] = None
+    encomenda: Optional[str] = None
     itens: List[ItemCalculado]
     total: float
     qtd_total: float
@@ -70,5 +74,11 @@ class ItemReciboInput(BaseModel):
 
 class EditarReciboRequest(BaseModel):
     nota: Optional[str] = None
+    encomenda: Optional[str] = None
     data: str
     itens: List[ItemReciboInput]
+
+
+class RenomearEncomendaRequest(BaseModel):
+    de: str
+    para: str

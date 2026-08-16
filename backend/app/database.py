@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS recibos (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
     data      TEXT NOT NULL,
     nota      TEXT,
+    encomenda TEXT,
     total     REAL NOT NULL,
     qtd_total REAL NOT NULL
 );
@@ -50,6 +51,17 @@ def get_db() -> sqlite3.Connection:
     return conn
 
 
+def _migrar_colunas_novas(conn: sqlite3.Connection) -> None:
+    """CREATE TABLE IF NOT EXISTS não adiciona coluna em tabela que já existe
+    de uma versão anterior do app — sem uma ferramenta de migration (Alembic
+    seria overkill aqui), isso resolve na mão: confere se a coluna existe e,
+    se não existir, adiciona."""
+    colunas = {row["name"] for row in conn.execute("PRAGMA table_info(recibos)")}
+    if "encomenda" not in colunas:
+        conn.execute("ALTER TABLE recibos ADD COLUMN encomenda TEXT")
+        conn.commit()
+
+
 def init_db() -> None:
     """Cria as tabelas se não existirem e, na primeira execução, popula a
     tabela de produtos a partir do catálogo original (data/produtos_seed.json).
@@ -59,6 +71,7 @@ def init_db() -> None:
     try:
         conn.executescript(SCHEMA)
         conn.commit()
+        _migrar_colunas_novas(conn)
 
         count = conn.execute("SELECT COUNT(*) FROM produtos").fetchone()[0]
         if count == 0:

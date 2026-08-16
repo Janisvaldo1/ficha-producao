@@ -54,6 +54,7 @@ const api = {
   limparHistorico: () => apiCall('/recibos', {method:'DELETE'}),
   editarRecibo: (id, payload) => apiCall('/recibos/'+id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}),
   excluirRecibo: (id) => apiCall('/recibos/'+id, {method:'DELETE'}),
+  renomearEncomenda: (de, para) => apiCall('/encomendas/renomear', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({de, para})}),
 };
 
 // ---------- tabs ----------
@@ -226,6 +227,7 @@ async function calcularRecibo(items){
     data: dataInput ? new Date(dataInput+'T00:00:00').toISOString() : new Date().toISOString(),
     dataInput: dataInput || null, // o que manda pro backend ao salvar — null = usa "agora"
     nota: $('#receipt-note').value.trim(),
+    encomenda: $('#receipt-encomenda').value.trim(),
     itens: calc.itens,
     total: calc.total,
     qtdTotal: calc.qtd_total,
@@ -297,13 +299,14 @@ async function salvarRecibo(){
   try{
     const salvo = await api.salvarRecibo({
       nota: ultimoCalculo.nota,
+      encomenda: ultimoCalculo.encomenda,
       itens: ultimoCalculo.itens,
       total: ultimoCalculo.total,
       qtd_total: ultimoCalculo.qtdTotal,
       data: ultimoCalculo.dataInput,
     });
     historico.unshift({
-      id: salvo.id, data: salvo.data, nota: salvo.nota,
+      id: salvo.id, data: salvo.data, nota: salvo.nota, encomenda: salvo.encomenda,
       itens: salvo.itens, total: salvo.total, qtdTotal: salvo.qtd_total,
     });
     // `innerHTML +=` reconstrói os nós filhos, então o botão precisa ser
@@ -323,6 +326,7 @@ $('#btn-limpar').addEventListener('click', ()=>{
   $('#text-input').value = '';
   $('#file-status').innerHTML = '';
   $('#receipt-note').value = '';
+  $('#receipt-encomenda').value = '';
   $('#receipt-date').value = '';
   $('#calc-alert-area').innerHTML = '';
   $('#result-area').innerHTML = '';
@@ -550,15 +554,47 @@ function renderHistorico(){
   html += '<div class="summary-box"><div class="slabel">Peças no total</div><div class="sval">'+totalPecas+'</div></div>';
   html += '</div>';
 
-  html += '<div class="card" style="padding:14px 14px 16px;">';
+  // ---- agrupa por encomenda ----
+  // chave null = recibos avulsos, sem encomenda. Guarda o índice original de
+  // `historico` em cada item, é o que abrirDetalheHistorico() espera.
+  const grupos = new Map();
   historico.forEach((h, idx)=>{
-    html += '<div class="hist-item" data-idx="'+idx+'">'
-      + '<div class="hleft"><div class="hdate">'+fmtDateShort(h.data)+'</div><div class="hnote">'+(h.nota?escapeHtml(h.nota):'Recibo sem nota')+'</div></div>'
-      + '<div class="hright"><div class="hval">'+fmtMoney(h.total)+'</div><div class="hqty">'+h.qtdTotal+' peças</div></div>'
-      + '</div>';
+    const chave = h.encomenda || null;
+    if(!grupos.has(chave)) grupos.set(chave, []);
+    grupos.get(chave).push({h, idx});
   });
+  const semEncomenda = grupos.get(null) || [];
+  grupos.delete(null);
+  // grupos nomeados primeiro, ordenados pelo recibo mais recente de cada um
+  const gruposNomeados = [...grupos.entries()].sort((a, b)=>{
+    const maisRecente = arr => Math.max(...arr.map(({h})=>new Date(h.data).getTime()));
+    return maisRecente(b[1]) - maisRecente(a[1]);
+  });
+
+  function renderGrupo(nome, itens){
+    const totalGrupo = itens.reduce((s,{h})=>s+h.total, 0);
+    const pecasGrupo = itens.reduce((s,{h})=>s+h.qtdTotal, 0);
+    let g = '<div class="card" style="padding:14px 14px 16px;">';
+    g += '<div class="encomenda-head"><h3 class="encomenda-title">'+(nome?escapeHtml(nome):'Recibos sem encomenda')+'</h3>'
+      + '<span class="encomenda-count">'+itens.length+' recibo'+(itens.length!==1?'s':'')+'</span></div>';
+    itens.forEach(({h, idx})=>{
+      g += '<div class="hist-item" data-idx="'+idx+'">'
+        + '<div class="hleft"><div class="hdate">'+fmtDateShort(h.data)+'</div><div class="hnote">'+(h.nota?escapeHtml(h.nota):'Recibo sem nota')+'</div></div>'
+        + '<div class="hright"><div class="hval">'+fmtMoney(h.total)+'</div><div class="hqty">'+h.qtdTotal+' peças</div></div>'
+        + '</div>';
+    });
+    g += '<div class="encomenda-foot"><div class="encomenda-foot-stats"><span><b>'+pecasGrupo+'</b> peças</span><span class="efoot-total">'+fmtMoney(totalGrupo)+'</span></div>';
+    if(nome){
+      g += '<button class="btn btn-ghost btn-sm btn-alterar-encomenda" data-nome="'+escapeAttr(nome)+'">Alterar</button>';
+    }
+    g += '</div></div>';
+    return g;
+  }
+
+  gruposNomeados.forEach(([nome, itens])=>{ html += renderGrupo(nome, itens); });
+  if(semEncomenda.length) html += renderGrupo(null, semEncomenda);
+
   html += '<div class="row-actions"><button class="btn btn-danger btn-sm" id="btn-limpar-historico">Limpar todo o histórico</button></div>';
-  html += '</div>';
 
   el.innerHTML = html;
 
@@ -568,6 +604,9 @@ function renderHistorico(){
       abrirDetalheHistorico(historico[idx], idx);
     });
   });
+  $$('.btn-alterar-encomenda', el).forEach(btn=>{
+    btn.addEventListener('click', ()=>abrirRenomearEncomenda(btn.dataset.nome));
+  });
   $('#btn-limpar-historico').addEventListener('click', ()=>{
     confirmModal('Limpar todo o histórico?', 'Isso apaga todos os '+historico.length+' recibos salvos. Essa ação não pode ser desfeita.', async ()=>{
       try{
@@ -576,6 +615,38 @@ function renderHistorico(){
         renderHistorico();
       }catch(e){
         el.innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>' + el.innerHTML;
+      }
+    });
+  });
+}
+
+// ---------- alterar (renomear) uma encomenda inteira ----------
+function abrirRenomearEncomenda(nomeAtual){
+  const html = '<div class="modal-back" id="ren-back"><div class="modal">'
+    + '<h3>Alterar encomenda</h3>'
+    + '<p>Renomeia essa encomenda em todos os recibos que pertencem a ela.</p>'
+    + '<div class="field"><label class="field-label">Nome da encomenda</label><input type="text" id="ren-novo" value="'+escapeAttr(nomeAtual)+'"></div>'
+    + '<div id="ren-alert"></div>'
+    + '<div class="row-actions"><button class="btn btn-ghost" id="ren-cancelar">Cancelar</button><button class="btn btn-primary" id="ren-salvar" style="margin-left:auto;">Salvar</button></div>'
+    + '</div></div>';
+  $('#modal-root').innerHTML = html;
+  $('#ren-back').addEventListener('click', (e)=>{ if(e.target.id==='ren-back') $('#modal-root').innerHTML=''; });
+  $('#ren-cancelar').addEventListener('click', ()=>{ $('#modal-root').innerHTML=''; });
+  $('#ren-salvar').addEventListener('click', ()=>{
+    const novoNome = $('#ren-novo').value.trim();
+    const alertEl = $('#ren-alert');
+    if(!novoNome){ alertEl.innerHTML = '<div class="alert alert-warn">Informe um nome.</div>'; return; }
+    if(novoNome === nomeAtual){ $('#modal-root').innerHTML=''; return; }
+    // Sistema de segurança: renomear também passa por confirmação — afeta vários recibos de uma vez.
+    confirmModal('Confirmar alteração?', 'Isso muda "'+nomeAtual+'" para "'+novoNome+'" em todos os recibos dessa encomenda.', async ()=>{
+      try{
+        await api.renomearEncomenda(nomeAtual, novoNome);
+        historico.forEach(h=>{ if(h.encomenda===nomeAtual) h.encomenda = novoNome; });
+        renderHistorico();
+        showToast('Encomenda alterada.');
+      }catch(e){
+        abrirRenomearEncomenda(nomeAtual);
+        $('#ren-alert').innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
       }
     });
   });
@@ -631,6 +702,7 @@ function abrirEdicaoRecibo(calc, idx){
   const dataInputVal = (calc.data || '').slice(0, 10); // ISO -> AAAA-MM-DD
   let html = '<div class="modal-back" id="edit-back"><div class="modal" style="max-width:480px; max-height:86vh; overflow-y:auto;">';
   html += '<h3>Editar recibo</h3>';
+  html += '<div class="field"><label class="field-label">Encomenda</label><input type="text" id="ed-encomenda" value="'+escapeAttr(calc.encomenda||'')+'"></div>';
   html += '<div class="field"><label class="field-label">Nota</label><input type="text" id="ed-nota" value="'+escapeAttr(calc.nota||'')+'"></div>';
   html += '<div class="field"><label class="field-label">Data</label><input type="date" id="ed-data" value="'+dataInputVal+'"></div>';
   html += '<div class="table-scroll" style="max-height:280px;"><table><thead><tr>'
@@ -691,22 +763,25 @@ function abrirEdicaoRecibo(calc, idx){
       alertEl.innerHTML = '<div class="alert alert-warn">O recibo precisa ter pelo menos um item — ou exclua o recibo inteiro.</div>';
       return;
     }
-    const btn = $('#ed-salvar');
-    btn.disabled = true; btn.textContent = 'Salvando...';
-    try{
-      const salvo = await api.editarRecibo(calc.id, {nota: $('#ed-nota').value.trim(), data, itens});
-      const atualizado = {
-        id: salvo.id, data: salvo.data, nota: salvo.nota,
-        itens: salvo.itens, total: salvo.total, qtdTotal: salvo.qtd_total,
-      };
-      historico[idx] = atualizado;
-      $('#modal-root').innerHTML = '';
-      renderHistorico();
-      showToast('Recibo atualizado.');
-    }catch(e){
-      alertEl.innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
-      btn.disabled = false; btn.textContent = 'Salvar alterações';
-    }
+    const encomenda = $('#ed-encomenda').value.trim();
+    const nota = $('#ed-nota').value.trim();
+
+    // Sistema de segurança: nenhuma alteração é salva sem confirmação explícita.
+    confirmModal('Confirmar alteração deste recibo?', 'Isso substitui os dados salvos deste recibo. Confere antes de confirmar — essa ação não tem desfazer.', async ()=>{
+      try{
+        const salvo = await api.editarRecibo(calc.id, {nota, encomenda, data, itens});
+        const atualizado = {
+          id: salvo.id, data: salvo.data, nota: salvo.nota, encomenda: salvo.encomenda,
+          itens: salvo.itens, total: salvo.total, qtdTotal: salvo.qtd_total,
+        };
+        historico[idx] = atualizado;
+        renderHistorico();
+        showToast('Recibo atualizado.');
+      }catch(e){
+        abrirEdicaoRecibo(calc, idx);
+        $('#ed-alert').innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
+      }
+    });
   });
 }
 
@@ -731,7 +806,7 @@ async function init(){
   try{
     const [p, h] = await Promise.all([api.getProdutos(), api.getRecibos()]);
     produtos = p;
-    historico = h.map(r=>({id:r.id, data:r.data, nota:r.nota, itens:r.itens, total:r.total, qtdTotal:r.qtd_total}));
+    historico = h.map(r=>({id:r.id, data:r.data, nota:r.nota, encomenda:r.encomenda, itens:r.itens, total:r.total, qtdTotal:r.qtd_total}));
   }catch(e){
     $('#panel-calc').insertAdjacentHTML('afterbegin', '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>');
   }
