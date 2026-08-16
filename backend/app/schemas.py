@@ -89,3 +89,24 @@ class MoverEncomendaRequest(BaseModel):
     encomenda: Optional[str] = None
     """Encomenda de destino pros recibos listados em `ids`. None/vazio move
     pra "sem encomenda" — útil pra desfazer um agrupamento em lote."""
+
+
+class Diaria(BaseModel):
+    id: int
+    encomenda: str
+    data: Optional[str] = None
+    valor: float
+    comentario: Optional[str] = None
+
+
+class CriarDiariaRequest(BaseModel):
+    encomenda: str
+    data: Optional[str] = None
+    valor: float = 120.0
+    comentario: Optional[str] = None
+
+
+class EditarDiariaRequest(BaseModel):
+    data: Optional[str] = None
+    valor: float
+    comentario: Optional[str] = None

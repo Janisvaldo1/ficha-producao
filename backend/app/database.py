@@ -40,6 +40,14 @@ CREATE TABLE IF NOT EXISTS itens_recibo (
     subtotal   REAL NOT NULL,
     ok         INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS diarias (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    encomenda  TEXT NOT NULL,
+    data       TEXT,
+    valor      REAL NOT NULL,
+    comentario TEXT
+);
 """
 
 
@@ -59,6 +67,20 @@ def _migrar_colunas_novas(conn: sqlite3.Connection) -> None:
     colunas = {row["name"] for row in conn.execute("PRAGMA table_info(recibos)")}
     if "encomenda" not in colunas:
         conn.execute("ALTER TABLE recibos ADD COLUMN encomenda TEXT")
+        conn.commit()
+
+    # Cria tabela de diárias se não existir (bancos antigos)
+    tabelas = {row["name"] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    if "diarias" not in tabelas:
+        conn.executescript("""
+            CREATE TABLE diarias (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                encomenda  TEXT NOT NULL,
+                data       TEXT,
+                valor      REAL NOT NULL,
+                comentario TEXT
+            );
+        """)
         conn.commit()
 
 

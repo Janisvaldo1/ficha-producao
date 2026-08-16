@@ -56,6 +56,10 @@ const api = {
   excluirRecibo: (id) => apiCall('/recibos/'+id, {method:'DELETE'}),
   renomearEncomenda: (de, para) => apiCall('/encomendas/renomear', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({de, para})}),
   moverParaEncomenda: (ids, encomenda) => apiCall('/encomendas/mover', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ids, encomenda})}),
+  listarDiarias: (encomenda) => apiCall('/diarias'+(encomenda?'?encomenda='+encodeURIComponent(encomenda):'')),
+  criarDiaria: (payload) => apiCall('/diarias', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}),
+  editarDiaria: (id, payload) => apiCall('/diarias/'+id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}),
+  excluirDiaria: (id) => apiCall('/diarias/'+id, {method:'DELETE'}),
 };
 
 // ---------- tabs ----------
@@ -533,12 +537,27 @@ async function shareRecibo(calc){
 }
 
 // ---------- historico tab ----------
-function renderHistorico(){
+async function renderHistorico(){
   const el = $('#historico-content');
   if(!historico.length){
     el.innerHTML = '<div class="card"><div class="empty"><div class="eicon">🧾</div><div class="etitle">Nenhum recibo salvo ainda</div><div class="esub">Calcule um recibo na aba "Calcular" e clique em "Salvar no histórico".</div></div></div>';
     return;
   }
+
+  let diarias = [];
+  try{
+    diarias = await api.listarDiarias();
+  }catch(e){
+    console.warn('erro ao carregar diárias:', e);
+  }
+
+  // Agrupa diárias por encomenda
+  const diariasPos = new Map();
+  diarias.forEach(d=>{
+    const chave = d.encomenda;
+    if(!diariasPos.has(chave)) diariasPos.set(chave, []);
+    diariasPos.get(chave).push(d);
+  });
   const totalGeral = historico.reduce((s,h)=>s+h.total,0);
   const totalPecas = historico.reduce((s,h)=>s+h.qtdTotal,0);
 
@@ -575,9 +594,14 @@ function renderHistorico(){
   function renderGrupo(nome, itens){
     const totalGrupo = itens.reduce((s,{h})=>s+h.total, 0);
     const pecasGrupo = itens.reduce((s,{h})=>s+h.qtdTotal, 0);
+    const diariasDaEncomenda = (nome && diariasPos.has(nome)) ? diariasPos.get(nome) : [];
+    const totalDiarias = diariasDaEncomenda.reduce((s,d)=>s+d.valor, 0);
+
     let g = '<div class="card" style="padding:14px 14px 16px;">';
     g += '<div class="encomenda-head"><h3 class="encomenda-title">'+(nome?escapeHtml(nome):'Recibos sem encomenda')+'</h3>'
       + '<span class="encomenda-count">'+itens.length+' recibo'+(itens.length!==1?'s':'')+'</span></div>';
+
+    // Recibos
     itens.forEach(({h, idx})=>{
       g += '<div class="hist-item" data-idx="'+idx+'">'
         + '<input type="checkbox" class="sel-recibo" data-idx="'+idx+'">'
@@ -585,7 +609,30 @@ function renderHistorico(){
         + '<div class="hright"><div class="hval">'+fmtMoney(h.total)+'</div><div class="hqty">'+h.qtdTotal+' peças</div></div>'
         + '</div>';
     });
-    g += '<div class="encomenda-foot"><div class="encomenda-foot-stats"><span><b>'+pecasGrupo+'</b> peças</span><span class="efoot-total">'+fmtMoney(totalGrupo)+'</span></div>';
+
+    // Diárias
+    if(nome){
+      if(diariasDaEncomenda.length){
+        g += '<div class="diarias-section">';
+        g += '<div class="diarias-title">Diárias</div>';
+        diariasDaEncomenda.forEach(d=>{
+          g += '<div class="diaria-item" data-diaria-id="'+d.id+'">'
+            + '<div class="dleft"><div class="ddata">'+(d.data?fmtDateShort(d.data):'sem data')+'</div><div class="dcomentario">'+(d.comentario?escapeHtml(d.comentario):'sem comentário')+'</div></div>'
+            + '<div class="dright"><div class="dval">'+fmtMoney(d.valor)+'</div></div>'
+            + '</div>';
+        });
+        g += '</div>';
+      }
+      g += '<div class="btn-add-diaria-wrapper"><button class="btn btn-ghost btn-sm btn-add-diaria" data-encomenda="'+escapeAttr(nome)+'">+ Adicionar diária</button></div>';
+    }
+
+    g += '<div class="encomenda-foot"><div class="encomenda-foot-stats">'
+      + '<span><b>'+pecasGrupo+'</b> peças</span>'
+      + '<span class="efoot-total">'+fmtMoney(totalGrupo)+' recibos</span>';
+    if(totalDiarias > 0){
+      g += '<span class="efoot-diarias">+ '+fmtMoney(totalDiarias)+' diárias</span>';
+    }
+    g += '</div>';
     if(nome){
       g += '<button class="btn btn-ghost btn-sm btn-alterar-encomenda" data-nome="'+escapeAttr(nome)+'">Alterar</button>';
     }

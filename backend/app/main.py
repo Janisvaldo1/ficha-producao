@@ -7,7 +7,7 @@ processos separados nem lidar com CORS entre front e back.
 """
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -299,6 +299,97 @@ def mover_encomenda(req: schemas.MoverEncomendaRequest):
         )
         conn.commit()
         return {"ok": True, "recibos_movidos": cur.rowcount}
+    finally:
+        conn.close()
+
+
+# ---------- diárias ----------
+
+@app.get("/api/diarias", response_model=List[schemas.Diaria])
+def listar_diarias(encomenda: Optional[str] = None):
+    """Lista todas as diárias, opcionalmente filtradas por encomenda."""
+    conn = get_db()
+    try:
+        if encomenda:
+            rows = conn.execute(
+                "SELECT * FROM diarias WHERE encomenda=? ORDER BY data DESC, id DESC",
+                (encomenda,),
+            ).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM diarias ORDER BY data DESC, id DESC").fetchall()
+        return [schemas.Diaria(
+            id=r["id"], encomenda=r["encomenda"], data=r["data"],
+            valor=r["valor"], comentario=r["comentario"],
+        ) for r in rows]
+    finally:
+        conn.close()
+
+
+@app.post("/api/diarias", response_model=schemas.Diaria)
+def criar_diaria(req: schemas.CriarDiariaRequest):
+    """Cria uma nova diária ligada a uma encomenda."""
+    conn = get_db()
+    try:
+        data_iso = None
+        if req.data:
+            try:
+                data_iso = datetime.fromisoformat(req.data).isoformat()
+            except ValueError:
+                raise HTTPException(400, "Data inválida — use o formato AAAA-MM-DD.")
+        cur = conn.execute(
+            "INSERT INTO diarias (encomenda, data, valor, comentario) VALUES (?, ?, ?, ?)",
+            (req.encomenda, data_iso, req.valor, req.comentario or None),
+        )
+        conn.commit()
+        diaria_id = cur.lastrowid
+        r = conn.execute("SELECT * FROM diarias WHERE id=?", (diaria_id,)).fetchone()
+        return schemas.Diaria(
+            id=r["id"], encomenda=r["encomenda"], data=r["data"],
+            valor=r["valor"], comentario=r["comentario"],
+        )
+    finally:
+        conn.close()
+
+
+@app.put("/api/diarias/{diaria_id}", response_model=schemas.Diaria)
+def editar_diaria(diaria_id: int, req: schemas.EditarDiariaRequest):
+    """Edita uma diária existente."""
+    conn = get_db()
+    try:
+        existe = conn.execute("SELECT 1 FROM diarias WHERE id=?", (diaria_id,)).fetchone()
+        if not existe:
+            raise HTTPException(404, f"Diária {diaria_id} não encontrada.")
+        data_iso = None
+        if req.data:
+            try:
+                data_iso = datetime.fromisoformat(req.data).isoformat()
+            except ValueError:
+                raise HTTPException(400, "Data inválida — use o formato AAAA-MM-DD.")
+        conn.execute(
+            "UPDATE diarias SET data=?, valor=?, comentario=? WHERE id=?",
+            (data_iso, req.valor, req.comentario or None, diaria_id),
+        )
+        conn.commit()
+        r = conn.execute("SELECT * FROM diarias WHERE id=?", (diaria_id,)).fetchone()
+        return schemas.Diaria(
+            id=r["id"], encomenda=r["encomenda"], data=r["data"],
+            valor=r["valor"], comentario=r["comentario"],
+        )
+    finally:
+        conn.close()
+
+
+@app.delete("/api/diarias/{diaria_id}")
+def excluir_diaria(diaria_id: int):
+    """Exclui uma diária."""
+    conn = get_db()
+    try:
+        existe = conn.execute("SELECT 1 FROM diarias WHERE id=?", (diaria_id,)).fetchone()
+        if not existe:
+            raise HTTPException(404, f"Diária {diaria_id} não encontrada.")
+        conn.execute("DELETE FROM diarias WHERE id=?", (diaria_id,))
+        conn.commit()
+        return {"ok": True}
     finally:
         conn.close()
 
