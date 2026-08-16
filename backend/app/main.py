@@ -283,6 +283,26 @@ def renomear_encomenda(req: schemas.RenomearEncomendaRequest):
         conn.close()
 
 
+@app.put("/api/encomendas/mover")
+def mover_encomenda(req: schemas.MoverEncomendaRequest):
+    """Move um lote de recibos já salvos pra uma encomenda de uma vez —
+    usado pela seleção múltipla no histórico, pra organizar recibos antigos
+    sem precisar abrir e editar cada um."""
+    if not req.ids:
+        raise HTTPException(400, "Nenhum recibo selecionado.")
+    conn = get_db()
+    try:
+        placeholders = ",".join("?" * len(req.ids))
+        cur = conn.execute(
+            f"UPDATE recibos SET encomenda=? WHERE id IN ({placeholders})",
+            (req.encomenda or None, *req.ids),
+        )
+        conn.commit()
+        return {"ok": True, "recibos_movidos": cur.rowcount}
+    finally:
+        conn.close()
+
+
 # ---------- frontend estático ----------
 # Precisa vir por último: StaticFiles(html=True) captura "/" e qualquer rota
 # não reconhecida, então as rotas /api acima têm que estar registradas antes.

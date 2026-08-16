@@ -82,3 +82,10 @@ class EditarReciboRequest(BaseModel):
 class RenomearEncomendaRequest(BaseModel):
     de: str
     para: str
+
+
+class MoverEncomendaRequest(BaseModel):
+    ids: List[int]
+    encomenda: Optional[str] = None
+    """Encomenda de destino pros recibos listados em `ids`. None/vazio move
+    pra "sem encomenda" — útil pra desfazer um agrupamento em lote."""

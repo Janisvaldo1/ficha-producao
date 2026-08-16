@@ -55,6 +55,7 @@ const api = {
   editarRecibo: (id, payload) => apiCall('/recibos/'+id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}),
   excluirRecibo: (id) => apiCall('/recibos/'+id, {method:'DELETE'}),
   renomearEncomenda: (de, para) => apiCall('/encomendas/renomear', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({de, para})}),
+  moverParaEncomenda: (ids, encomenda) => apiCall('/encomendas/mover', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ids, encomenda})}),
 };
 
 // ---------- tabs ----------
@@ -579,6 +580,7 @@ function renderHistorico(){
       + '<span class="encomenda-count">'+itens.length+' recibo'+(itens.length!==1?'s':'')+'</span></div>';
     itens.forEach(({h, idx})=>{
       g += '<div class="hist-item" data-idx="'+idx+'">'
+        + '<input type="checkbox" class="sel-recibo" data-idx="'+idx+'">'
         + '<div class="hleft"><div class="hdate">'+fmtDateShort(h.data)+'</div><div class="hnote">'+(h.nota?escapeHtml(h.nota):'Recibo sem nota')+'</div></div>'
         + '<div class="hright"><div class="hval">'+fmtMoney(h.total)+'</div><div class="hqty">'+h.qtdTotal+' peças</div></div>'
         + '</div>';
@@ -591,6 +593,16 @@ function renderHistorico(){
     return g;
   }
 
+  // Barra de mover em lote — fica escondida até algum recibo ser marcado.
+  const nomesExistentes = gruposNomeados.map(([nome])=>nome);
+  html += '<div class="sel-bar" id="sel-bar" style="display:none;">'
+    + '<span id="sel-count"></span>'
+    + '<input type="text" id="sel-destino" list="encomenda-suggestions" placeholder="Nome da encomenda de destino">'
+    + '<datalist id="encomenda-suggestions">'+nomesExistentes.map(n=>'<option value="'+escapeAttr(n)+'">').join('')+'</datalist>'
+    + '<button class="btn btn-primary btn-sm" id="sel-mover">Mover selecionados</button>'
+    + '<button class="btn btn-ghost btn-sm" id="sel-cancelar">Cancelar seleção</button>'
+    + '</div>';
+
   gruposNomeados.forEach(([nome, itens])=>{ html += renderGrupo(nome, itens); });
   if(semEncomenda.length) html += renderGrupo(null, semEncomenda);
 
@@ -598,14 +610,57 @@ function renderHistorico(){
 
   el.innerHTML = html;
 
+  function atualizarBarraSelecao(){
+    const marcados = $$('.sel-recibo:checked', el);
+    const bar = $('#sel-bar');
+    if(marcados.length){
+      bar.style.display = '';
+      $('#sel-count').textContent = marcados.length+' selecionado'+(marcados.length!==1?'s':'');
+    }else{
+      bar.style.display = 'none';
+    }
+  }
+
   $$('.hist-item', el).forEach(item=>{
-    item.addEventListener('click', ()=>{
+    item.addEventListener('click', (e)=>{
+      if(e.target.classList.contains('sel-recibo')) return; // marcar checkbox não abre o detalhe
       const idx = parseInt(item.dataset.idx);
       abrirDetalheHistorico(historico[idx], idx);
     });
   });
+  $$('.sel-recibo', el).forEach(cb=>{
+    cb.addEventListener('click', e=>e.stopPropagation());
+    cb.addEventListener('change', atualizarBarraSelecao);
+  });
   $$('.btn-alterar-encomenda', el).forEach(btn=>{
     btn.addEventListener('click', ()=>abrirRenomearEncomenda(btn.dataset.nome));
+  });
+  $('#sel-cancelar').addEventListener('click', ()=>{
+    $$('.sel-recibo', el).forEach(cb=>cb.checked=false);
+    atualizarBarraSelecao();
+  });
+  $('#sel-mover').addEventListener('click', ()=>{
+    const marcados = $$('.sel-recibo:checked', el);
+    const alertHost = $('#sel-bar');
+    if(!marcados.length) return;
+    const destino = $('#sel-destino').value.trim();
+    if(!destino){
+      alertHost.insertAdjacentHTML('afterend', '<div class="alert alert-warn">Informe pra qual encomenda mover.</div>');
+      return;
+    }
+    const ids = marcados.map(cb => historico[parseInt(cb.dataset.idx)].id);
+    // Sistema de segurança: mover em lote também pede confirmação.
+    confirmModal('Mover '+ids.length+' recibo(s)?', 'Isso move '+ids.length+' recibo(s) selecionado(s) pra encomenda "'+destino+'".', async ()=>{
+      try{
+        await api.moverParaEncomenda(ids, destino);
+        historico.forEach(h=>{ if(ids.includes(h.id)) h.encomenda = destino; });
+        renderHistorico();
+        showToast(ids.length+' recibo(s) movido(s) pra "'+destino+'".');
+      }catch(e){
+        renderHistorico();
+        el.insertAdjacentHTML('afterbegin', '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>');
+      }
+    });
   });
   $('#btn-limpar-historico').addEventListener('click', ()=>{
     confirmModal('Limpar todo o histórico?', 'Isso apaga todos os '+historico.length+' recibos salvos. Essa ação não pode ser desfeita.', async ()=>{
