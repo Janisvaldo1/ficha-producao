@@ -299,6 +299,24 @@ td.tprice input{font-family:'IBM Plex Mono', monospace;}
 }
 .encomenda-foot-stats{display:flex; gap:12px; align-items:baseline; font-size:13px; color:var(--ink-soft);}
 .efoot-total{font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:16px; color:var(--sage-dark);}
+.efoot-diarias{font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:14px; color:var(--clay);}
+
+/* Diárias */
+.diarias-section{margin-top:10px; padding-top:10px; border-top:1px solid var(--line);}
+.diarias-title{font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;}
+.diaria-item{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:9px 12px; background:var(--stone); border-radius:4px; margin-bottom:6px;
+  border:1px solid var(--line); cursor:pointer;
+}
+.diaria-item:hover{border-color:var(--clay); background:var(--paper);}
+.dleft{flex:1;}
+.ddata{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft);}
+.dcomentario{font-size:12px; margin-top:2px; color:var(--ink);}
+.dright{text-align:right;}
+.dval{font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:14px; color:var(--clay);}
+.btn-add-diaria-wrapper{text-align:center; margin-top:8px;}
+.btn-add-diaria{font-size:12px; padding:6px 10px;}
 
 .sel-bar{
   display:flex; align-items:center; gap:8px; flex-wrap:wrap;

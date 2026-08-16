@@ -720,6 +720,18 @@ async function renderHistorico(){
       }
     });
   });
+
+  // Event listeners das diárias
+  $$('.btn-add-diaria', el).forEach(btn=>{
+    btn.addEventListener('click', ()=>abrirAdicionarDiaria(btn.dataset.encomenda));
+  });
+  $$('.diaria-item', el).forEach(item=>{
+    item.addEventListener('click', ()=>{
+      const id = parseInt(item.dataset.diarioId);
+      const d = diarias.find(x=>x.id===id);
+      if(d) abrirEditarDiaria(d);
+    });
+  });
 }
 
 // ---------- alterar (renomear) uma encomenda inteira ----------
@@ -749,6 +761,96 @@ function abrirRenomearEncomenda(nomeAtual){
       }catch(e){
         abrirRenomearEncomenda(nomeAtual);
         $('#ren-alert').innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
+      }
+    });
+  });
+}
+
+// ---------- adicionar diária ----------
+function abrirAdicionarDiaria(encomenda){
+  const dataHoje = new Date().toISOString().split('T')[0];
+  const html = '<div class="modal-back" id="add-diaria-back"><div class="modal">'
+    + '<h3>Adicionar diária — '+escapeHtml(encomenda)+'</h3>'
+    + '<div class="field"><label class="field-label">Data (opcional)</label><input type="date" id="add-diaria-data" value="'+dataHoje+'"></div>'
+    + '<div class="field"><label class="field-label">Valor (R$)</label><input type="number" id="add-diaria-valor" value="120" step="0.01" min="0"></div>'
+    + '<div class="field"><label class="field-label">Comentário (opcional)</label><input type="text" id="add-diaria-comentario" placeholder="ex: Montagem"></div>'
+    + '<div id="add-diaria-alert"></div>'
+    + '<div class="row-actions"><button class="btn btn-ghost" id="add-diaria-cancelar">Cancelar</button><button class="btn btn-primary" id="add-diaria-salvar" style="margin-left:auto;">Adicionar</button></div>'
+    + '</div></div>';
+  $('#modal-root').innerHTML = html;
+  $('#add-diaria-back').addEventListener('click', (e)=>{ if(e.target.id==='add-diaria-back') $('#modal-root').innerHTML=''; });
+  $('#add-diaria-cancelar').addEventListener('click', ()=>{ $('#modal-root').innerHTML=''; });
+  $('#add-diaria-salvar').addEventListener('click', async ()=>{
+    const data = $('#add-diaria-data').value.trim();
+    const valor = parseFloat($('#add-diaria-valor').value);
+    const comentario = $('#add-diaria-comentario').value.trim();
+    const alertEl = $('#add-diaria-alert');
+
+    if(isNaN(valor) || valor < 0){
+      alertEl.innerHTML = '<div class="alert alert-warn">Informe um valor válido.</div>';
+      return;
+    }
+
+    confirmModal('Confirmar adição?', 'Adiciona R$ '+valor.toFixed(2)+' de diária a "'+encomenda+'".', async ()=>{
+      try{
+        const nova = await api.criarDiaria({encomenda, data: data||null, valor, comentario: comentario||null});
+        renderHistorico();
+        showToast('Diária adicionada.');
+      }catch(e){
+        abrirAdicionarDiaria(encomenda);
+        $('#add-diaria-alert').innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
+      }
+    });
+  });
+}
+
+// ---------- editar diária ----------
+function abrirEditarDiaria(diaria){
+  const html = '<div class="modal-back" id="edit-diaria-back"><div class="modal">'
+    + '<h3>Editar diária</h3>'
+    + '<div class="field"><label class="field-label">Data (opcional)</label><input type="date" id="edit-diaria-data" value="'+(diaria.data?diaria.data.split('T')[0]:'')+'"></div>'
+    + '<div class="field"><label class="field-label">Valor (R$)</label><input type="number" id="edit-diaria-valor" value="'+diaria.valor+'" step="0.01" min="0"></div>'
+    + '<div class="field"><label class="field-label">Comentário (opcional)</label><input type="text" id="edit-diaria-comentario" value="'+(diaria.comentario?escapeAttr(diaria.comentario):'')+'"></div>'
+    + '<div id="edit-diaria-alert"></div>'
+    + '<div class="row-actions"><button class="btn btn-danger" id="edit-diaria-excluir">Excluir</button><button class="btn btn-ghost" id="edit-diaria-cancelar" style="margin-left:auto;">Cancelar</button><button class="btn btn-primary" id="edit-diaria-salvar">Salvar</button></div>'
+    + '</div></div>';
+  $('#modal-root').innerHTML = html;
+
+  $('#edit-diaria-back').addEventListener('click', (e)=>{ if(e.target.id==='edit-diaria-back') $('#modal-root').innerHTML=''; });
+  $('#edit-diaria-cancelar').addEventListener('click', ()=>{ $('#modal-root').innerHTML=''; });
+
+  $('#edit-diaria-excluir').addEventListener('click', ()=>{
+    confirmModal('Excluir diária?', 'Isso apaga a diária de R$ '+diaria.valor.toFixed(2)+'.', async ()=>{
+      try{
+        await api.excluirDiaria(diaria.id);
+        renderHistorico();
+        showToast('Diária excluída.');
+      }catch(e){
+        abrirEditarDiaria(diaria);
+        $('#edit-diaria-alert').innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
+      }
+    });
+  });
+
+  $('#edit-diaria-salvar').addEventListener('click', async ()=>{
+    const data = $('#edit-diaria-data').value.trim();
+    const valor = parseFloat($('#edit-diaria-valor').value);
+    const comentario = $('#edit-diaria-comentario').value.trim();
+    const alertEl = $('#edit-diaria-alert');
+
+    if(isNaN(valor) || valor < 0){
+      alertEl.innerHTML = '<div class="alert alert-warn">Informe um valor válido.</div>';
+      return;
+    }
+
+    confirmModal('Confirmar alteração?', 'Atualiza a diária pra R$ '+valor.toFixed(2)+'.', async ()=>{
+      try{
+        await api.editarDiaria(diaria.id, {data: data||null, valor, comentario: comentario||null});
+        renderHistorico();
+        showToast('Diária atualizada.');
+      }catch(e){
+        abrirEditarDiaria(diaria);
+        $('#edit-diaria-alert').innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
       }
     });
   });
