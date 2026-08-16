@@ -363,3 +363,15 @@ td.tprice input{font-family:'IBM Plex Mono', monospace;}
   .ritem{flex-wrap:wrap;}
   .ritem .ileader{display:none;}
 }
+
+/* Impressão de recibos selecionados */
+@media print{
+  body{
+    background:white;
+    margin:0;
+    padding:0;
+    color:var(--ink);
+  }
+  .app, .header, .tabs, #panel-calc, #panel-produtos{display:none;}
+  #print-area-*, [id^="print-area-"]{display:block !important;}
+}
