@@ -404,6 +404,31 @@ def listar_moldes(busca: str = None):            # 2. a função e o filtro opci
         linhas = conn.execute("SELECT * FROM molde").fetchall()
     return linhas
 
+@app.put("/api/moldes/{produto_codigo}", tags=["moldes"])
+def atualizar_molde(produto_codigo: str, req: schemas.AtualizarMoldeRequest):
+    """Atualiza os dados de um molde. Marca como cadastrado."""
+    conn = get_db()
+    try:
+        existe = conn.execute(
+            "SELECT 1 FROM molde WHERE produto_codigo=?", (produto_codigo,)
+        ).fetchone()
+        if not existe:
+            raise HTTPException(404, f"Molde do produto {produto_codigo} não encontrado.")
+
+        conn.execute(
+            "UPDATE molde SET unidades_disponiveis=?, pecas_por_enchimento=?, "
+            "enchimentos_por_dia=?, cadastrado=TRUE WHERE produto_codigo=?",
+            (req.unidades_disponiveis, req.pecas_por_enchimento,
+             req.enchimentos_por_dia, produto_codigo)
+        )
+        conn.commit()
+
+        return conn.execute(
+            "SELECT * FROM molde WHERE produto_codigo=?", (produto_codigo,)
+        ).fetchone()
+    finally:
+        conn.close()
+
 # ---------- frontend estático ----------z
 # Precisa vir por último: StaticFiles(html=True) captura "/" e qualquer rota
 # não reconhecida, então as rotas /api acima têm que estar registradas antes.

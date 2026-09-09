@@ -110,3 +110,8 @@ class EditarDiariaRequest(BaseModel):
     data: Optional[str] = None
     valor: float
     comentario: Optional[str] = None
+
+class AtualizarMoldeRequest(BaseModel):
+    unidades_disponiveis: int
+    pecas_por_enchimento: int
+    enchimentos_por_dia: int
