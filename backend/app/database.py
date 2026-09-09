@@ -12,12 +12,15 @@ import os
 import sqlite3
 from pathlib import Path
 from typing import Any, Optional
+from dotenv import load_dotenv
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "ficha.db"
 SEED_PATH = BASE_DIR / "data" / "produtos_seed.json"
 
 # Detecta qual banco usar
+load_dotenv(BASE_DIR / ".env")
 DATABASE_URL = os.getenv("DATABASE_URL")
 USE_POSTGRES = DATABASE_URL is not None
 

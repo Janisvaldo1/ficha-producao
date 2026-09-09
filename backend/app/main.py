@@ -393,8 +393,18 @@ def excluir_diaria(diaria_id: int):
     finally:
         conn.close()
 
+@app.get("/api/moldes", tags=["moldes"])        # 1. verbo + endereço + tag
+def listar_moldes(busca: str = None):            # 2. a função e o filtro opcional
+    """Lista os moldes. Se `busca` vier, filtra por código ou nome."""
+    conn = get_db()                              # 3. abre o banco  [JÁ VIU]
+    # 4. roda a query e devolve
+    if busca:
+        linhas = conn.execute("SELECT * FROM molde WHERE nome ILIKE ? OR produto_codigo ILIKE ?", (f"%{busca}%", f"%{busca}%")).fetchall()
+    else:
+        linhas = conn.execute("SELECT * FROM molde").fetchall()
+    return linhas
 
-# ---------- frontend estático ----------
+# ---------- frontend estático ----------z
 # Precisa vir por último: StaticFiles(html=True) captura "/" e qualquer rota
 # não reconhecida, então as rotas /api acima têm que estar registradas antes.
 app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
