@@ -171,3 +171,5 @@ relatório depois.
   combinações. Não foi modelado antes porque a informação ainda não está clara.
 - **Não modelar o que a fábrica ainda não confirmou** — a estrutura foi feita
   para aguentar expansão, não para adivinhar casos futuros.
+  
+  Cadastro inicial feito pelo /docs — o formulário só entra depois de validado o modelo com dado real

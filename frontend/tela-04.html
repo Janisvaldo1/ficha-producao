@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04 - Cadastro de Moldes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 10px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        /* ===== BUSCA ===== */
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .search-box input::placeholder {
+            color: #999;
+        }
+
+        /* ===== LISTA DE MOLDES ===== */
+        #lista {
+            display: block;
+        }
+
+        .molde-item {
+            background: white;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: box-shadow 0.2s, background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .molde-item:active {
+            background: #f9f9f9;
+        }
+
+        .molde-item.cadastrado {
+            border-left-color: #27ae60;
+            background: #f0fdf4;
+        }
+
+        .molde-item.nao-cadastrado {
+            border-left-color: #e74c3c;
+            background: #fef2f2;
+        }
+
+        .molde-info {
+            flex: 1;
+        }
+
+        .molde-nome {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .molde-codigo {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .molde-status {
+            font-size: 24px;
+            margin-left: 10px;
+        }
+
+        .molde-item.cadastrado .molde-status::after {
+            content: '✓';
+            color: #27ae60;
+        }
+
+        .molde-item.nao-cadastrado .molde-status::after {
+            content: '○';
+            color: #e74c3c;
+        }
+
+        /* ===== FORMULÁRIO ===== */
+        #formulario {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #formulario.ativo {
+            display: block;
+        }
+
+        #lista.oculto {
+            display: none;
+        }
+
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .form-header h2 {
+            font-size: 18px;
+            color: #2c3e50;
+        }
+
+        .btn-voltar {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            background: white;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn-salvar {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-salvar:active {
+            background: #229954;
+        }
+
+        .btn-cancelar {
+            background: #ecf0f1;
+            color: #666;
+        }
+
+        .btn-cancelar:active {
+            background: #d5dbdb;
+        }
+
+        /* ===== LOADING / ERRO ===== */
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .erro {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+
+        /* ===== RESPONSIVO ===== */
+        @media (min-width: 600px) {
+            .molde-item {
+                padding: 20px;
+            }
+
+            .form-group input {
+                font-size: 16px;
+            }
+
+            .btn {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>04 - Cadastro de Moldes</h1>
+            <p id="status-texto">Carregando moldes...</p>
+        </div>
+
+        <!-- BUSCA -->
+        <div class="search-box">
+            <input
+                type="text"
+                id="busca"
+                placeholder="Buscar por nome ou código..."
+                autocomplete="off"
+            >
+        </div>
+
+        <!-- LISTA -->
+        <div id="lista"></div>
+
+        <!-- FORMULÁRIO -->
+        <div id="formulario">
+            <div class="form-header">
+                <h2 id="form-titulo">Editar Molde</h2>
+                <button class="btn-voltar" id="btn-voltar">←</button>
+            </div>
+
+            <form id="form-molde">
+                <div class="form-group">
+                    <label for="unidades">Unidades Disponíveis</label>
+                    <input
+                        type="number"
+                        id="unidades"
+                        name="unidades_disponiveis"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="pecas">Peças por Enchimento</label>
+                    <input
+                        type="number"
+                        id="pecas"
+                        name="pecas_por_enchimento"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="enchimentos">Enchimentos por Dia</label>
+                    <input
+                        type="number"
+                        id="enchimentos"
+                        name="enchimentos_por_dia"
+                        required
+                    >
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancelar" id="btn-cancelar">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-salvar">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ===== ESTADO GLOBAL =====
+        let moldeLista = [];
+        let moldeAtual = null;
+
+        // ===== ELEMENTOS DO DOM =====
+        const inputBusca = document.getElementById('busca');
+        const divLista = document.getElementById('lista');
+        const divFormulario = document.getElementById('formulario');
+        const formMolde = document.getElementById('form-molde');
+        const btnVoltar = document.getElementById('btn-voltar');
+        const btnCancelar = document.getElementById('btn-cancelar');
+        const statusTexto = document.getElementById('status-texto');
+
+        // ===== FUNCTIONS =====
+
+        /**
+         * Carrega moldes com termo de busca (ou todos se vazio)
+         */
+        async function carregarMoldes(termo = '') {
+            try {
+                statusTexto.textContent = 'Carregando moldes...';
+                const url = termo ? `/api/moldes?busca=${encodeURIComponent(termo)}` : '/api/moldes';
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Erro ao carregar moldes');
+
+                moldeLista = await response.json();
+                statusTexto.textContent = `${moldeLista.length} moldes carregados`;
+                renderizarLista();
+            } catch (erro) {
+                console.error(erro);
+                statusTexto.textContent = '❌ Erro ao carregar moldes';
+                divLista.innerHTML = `<div class="erro">${erro.message}</div>`;
+            }
+        }
+
+        /**
+         * Renderiza a lista de moldes
+         */
+        function renderizarLista() {
+            divLista.innerHTML = '';
+
+            if (moldeLista.length === 0) {
+                divLista.innerHTML = '<div class="loading">Nenhum molde encontrado</div>';
+                return;
+            }
+
+            moldeLista.forEach(molde => {
+                const item = document.createElement('div');
+                item.className = `molde-item ${molde.cadastrado ? 'cadastrado' : 'nao-cadastrado'}`;
+                item.innerHTML = `
+                    <div class="molde-info">
+                        <div class="molde-nome">${molde.nome}</div>
+                        <div class="molde-codigo">#${molde.produto_codigo}</div>
+                    </div>
+                    <div class="molde-status"></div>
+                `;
+                item.addEventListener('click', () => abrirFormulario(molde));
+                divLista.appendChild(item);
+            });
+        }
+
+        /**
+         * Abre o formulário para editar um molde
+         */
+        function abrirFormulario(molde) {
+            moldeAtual = molde;
+
+            // Preenche formulário com dados já em memória
+            document.getElementById('unidades').value = molde.unidades_disponiveis || '';
+            document.getElementById('pecas').value = molde.pecas_por_enchimento || '';
+            document.getElementById('enchimentos').value = molde.enchimentos_por_dia || '';
+            document.getElementById('form-titulo').textContent = `Editar: ${molde.nome}`;
+
+            // Mostra/esconde
+            divLista.classList.add('oculto');
+            divFormulario.classList.add('ativo');
+        }
+
+        /**
+         * Volta pra lista
+         */
+        function fecharFormulario() {
+            divLista.classList.remove('oculto');
+            divFormulario.classList.remove('ativo');
+            moldeAtual = null;
+            formMolde.reset();
+        }
+
+        /**
+         * Salva o molde na API com PUT
+         */
+        async function salvarMolde(event) {
+            event.preventDefault();
+
+            if (!moldeAtual) return;
+
+            try {
+                const dados = {
+                    unidades_disponiveis: parseInt(document.getElementById('unidades').value),
+                    pecas_por_enchimento: parseInt(document.getElementById('pecas').value),
+                    enchimentos_por_dia: parseInt(document.getElementById('enchimentos').value)
+                };
+
+                const response = await fetch(`/api/moldes/${moldeAtual.produto_codigo}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Molde não encontrado');
+                    }
+                    throw new Error('Erro ao salvar molde');
+                }
+
+                const moldeAtualizado = await response.json();
+
+                // Atualiza na lista local
+                const moldeIndex = moldeLista.findIndex(m => m.produto_codigo === moldeAtual.produto_codigo);
+                if (moldeIndex !== -1) {
+                    moldeLista[moldeIndex] = moldeAtualizado;
+                }
+
+                fecharFormulario();
+                renderizarLista();
+            } catch (erro) {
+                console.error(erro);
+                alert('Erro ao salvar: ' + erro.message);
+            }
+        }
+
+        // ===== EVENT LISTENERS =====
+        inputBusca.addEventListener('input', (e) => {
+            const termo = e.target.value.trim();
+            carregarMoldes(termo);
+        });
+        formMolde.addEventListener('submit', salvarMolde);
+        btnVoltar.addEventListener('click', fecharFormulario);
+        btnCancelar.addEventListener('click', fecharFormulario);
+
+        // ===== INICIALIZAÇÃO =====
+        carregarMoldes();
+    </script>
+</body>
+</html>
