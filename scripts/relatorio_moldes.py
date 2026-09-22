@@ -19,7 +19,7 @@ def buscar_dados():
         return None
 
     
-dados = buscar_dados()
+dados = buscar_dados() 
 if dados is None:
     sys.exit(1) 
 if not dados:
