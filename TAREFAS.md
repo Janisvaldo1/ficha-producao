@@ -126,7 +126,7 @@ tiver usado.
 - [x] Três camadas: tela → back-end → banco
 - [x] Camada de abstração de dados (o `database.py`)
 - [x] Ambiente local vs produção
-- [ ] Escrever uma rota
+- [x] Escrever uma rota
 - [ ] Como uma função Python vira JSON
 
 ### Python / dados
