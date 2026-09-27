@@ -429,6 +429,52 @@ def atualizar_molde(produto_codigo: str, req: schemas.AtualizarMoldeRequest):
     finally:
         conn.close()
 
+@app.get("/api/capacidade", tags=["capacidade"])
+def consulta_encomenda(encomenda: str, prazo_dias: int = 14):
+    conn = get_db()
+    consulta = conn.execute("""
+    SELECT i.codigo,
+           i.nome,
+           SUM(i.quantidade) AS quantidade_total,
+           MAX(m.unidades_disponiveis * m.pecas_por_enchimento * m.enchimentos_por_dia) AS capacidade_dia,
+           CEIL(CAST(SUM(i.quantidade) AS numeric) /
+                NULLIF(MAX(m.unidades_disponiveis * m.pecas_por_enchimento * m.enchimentos_por_dia), 0)) AS dias_necessarios
+    FROM itens_recibo i
+    JOIN recibos r ON r.id = i.recibo_id
+    LEFT JOIN molde m ON m.produto_codigo = i.codigo
+    WHERE r.encomenda = ?
+    GROUP BY i.codigo, i.nome
+    ORDER BY dias_necessarios DESC NULLS LAST
+""", (encomenda,)).fetchall()
+    
+    qtd_itens = len(consulta)
+    total_pecas = 0
+    dias = []
+    pior_caso = 0
+    for linha in consulta:
+        total_pecas = total_pecas + linha["quantidade_total"]
+        if linha["dias_necessarios"] is not None:
+            dias.append(linha["dias_necessarios"])
+            if linha["dias_necessarios"] > pior_caso:
+                pior_caso = linha["dias_necessarios"]
+    itens_analisados = len(dias)
+    cabe_no_prazo = pior_caso <= prazo_dias
+    return {
+    "encomenda": encomenda,
+    "prazo_dias": prazo_dias,
+    "total_pecas": total_pecas,
+    "pior_caso_dias": pior_caso,
+    "itens_total": qtd_itens,
+    "itens_analisados": itens_analisados,
+    "cabe_no_prazo": cabe_no_prazo,
+    "itens": consulta,
+
+}
+
+
+    
+    
+
 # ---------- frontend estático ----------z
 # Precisa vir por último: StaticFiles(html=True) captura "/" e qualquer rota
 # não reconhecida, então as rotas /api acima têm que estar registradas antes.
