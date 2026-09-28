@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>05 - Capacidade — J J Marmorite</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .voltar{
+    display:inline-block; margin-bottom:10px;
+    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.04em;
+    color:var(--ink-soft); text-decoration:none;
+  }
+  .voltar:hover{color:var(--clay-dark);}
+
+  .filtros{display:flex; gap:12px; flex-wrap:wrap;}
+  .filtros .field{margin-bottom:0;}
+  .filtros .f-encomenda{flex:1 1 220px;}
+  .filtros .f-prazo{flex:0 0 120px;}
+  .filtros select, .filtros input[type=number]{
+    width:100%; font-size:16px; padding:9px 11px; border:1px solid var(--line); border-radius:6px;
+    background:var(--stone); font-family:'IBM Plex Sans', sans-serif; color:var(--ink);
+  }
+
+  /* Resposta em destaque */
+  .veredito{
+    border-radius:8px; padding:18px 20px; margin-bottom:16px;
+    border:2px solid; box-shadow:var(--shadow);
+  }
+  .veredito .v-eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em;
+    text-transform:uppercase; margin:0 0 4px; opacity:0.8;
+  }
+  .veredito .v-titulo{font-family:'Zilla Slab', serif; font-weight:700; font-size:28px; line-height:1.1; margin:0;}
+  .veredito .v-sub{font-size:13.5px; margin-top:6px;}
+  .veredito.sim{background:#EAF0E3; color:var(--sage-dark); border-color:var(--sage);}
+  .veredito.nao{background:#F6E4E1; color:#8C332A; border-color:var(--red);}
+  .veredito.ressalva{background:#F5EBD8; color:#7A5A1E; border-color:#C9A24E;}
+
+  /* Contagem X de Y — sempre visível */
+  .analisados{
+    display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
+    font-size:14px; margin-bottom:12px;
+  }
+  .analisados b{font-family:'IBM Plex Mono', monospace; font-size:18px;}
+
+  /* Aviso de resultado incompleto — propositalmente forte */
+  .aviso-incompleto{
+    background:#F6E4E1; color:#8C332A; border:2px solid var(--red); border-left-width:8px;
+    border-radius:8px; padding:14px 16px; margin-bottom:16px;
+    font-size:14px; line-height:1.45;
+  }
+  .aviso-incompleto .a-titulo{font-family:'Zilla Slab', serif; font-weight:700; font-size:18px; margin:0 0 4px;}
+
+  td.tnum, th.tnum{text-align:right; font-family:'IBM Plex Mono', monospace; white-space:nowrap;}
+  td.tdias{font-weight:600;}
+  td.tdias.estoura{color:var(--red);}
+
+  @media (max-width:520px){
+    .veredito .v-titulo{font-size:23px;}
+    .filtros .f-prazo{flex:1 1 100%;}
+    table{font-size:12.5px;}
+    thead th, tbody td{padding:6px 5px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <a class="voltar" href="/">← Voltar</a>
+
+  <div class="header">
+    <div>
+      <p class="brand-eyebrow">05 · Capacidade</p>
+      <h1 class="brand-title">Cabe no prazo?</h1>
+      <p class="brand-sub">Confere se a encomenda sai no prazo com os moldes cadastrados.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="filtros">
+      <div class="field f-encomenda">
+        <label class="field-label" for="sel-encomenda">Encomenda</label>
+        <select id="sel-encomenda" disabled>
+          <option value="">carregando...</option>
+        </select>
+      </div>
+      <div class="field f-prazo">
+        <label class="field-label" for="prazo">Prazo (dias)</label>
+        <input type="number" id="prazo" value="14" min="1" step="1" inputmode="numeric">
+      </div>
+    </div>
+    <div id="lista-alert"></div>
+  </div>
+
+  <div id="resultado"></div>
+
+</div>
+
+<script>
+const $ = (s)=>document.querySelector(s);
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : String(s);
+  return d.innerHTML;
+}
+
+function fmtNum(n){
+  return Number(n).toLocaleString('pt-BR');
+}
+
+async function getJson(url){
+  const res = await fetch(url);
+  if(!res.ok){
+    let detalhe = '';
+    try{ const j = await res.json(); detalhe = j.detail ? (typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail)) : ''; }catch(e){}
+    throw new Error('Erro '+res.status+' em '+url.split('?')[0]+(detalhe ? ' — '+detalhe : ''));
+  }
+  return res.json();
+}
+
+// ---------- lista de encomendas ----------
+async function carregarEncomendas(){
+  const sel = $('#sel-encomenda');
+  try{
+    const lista = await getJson('/api/encomendas');
+    if(!lista.length){
+      sel.innerHTML = '<option value="">nenhuma encomenda</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">Escolha uma encomenda...</option>'
+      + lista.map(e => '<option value="'+escapeHtml(e.encomenda)+'">'
+          + escapeHtml(e.encomenda)+' — '+fmtNum(e.total_pecas)+' peças, '
+          + fmtNum(e.produtos_diferentes)+' produtos</option>').join('');
+    sel.disabled = false;
+  }catch(e){
+    sel.innerHTML = '<option value="">indisponível</option>';
+    $('#lista-alert').innerHTML = '<div class="alert alert-error">⚠ Não consegui carregar a lista de encomendas. '+escapeHtml(e.message)+'</div>';
+  }
+}
+
+// ---------- consulta de capacidade ----------
+let consultaAtual = 0;
+
+async function consultar(){
+  const encomenda = $('#sel-encomenda').value;
+  const area = $('#resultado');
+  if(!encomenda){ area.innerHTML = ''; return; }
+
+  const prazo = parseInt($('#prazo').value, 10);
+  if(!(prazo > 0)){
+    area.innerHTML = '<div class="alert alert-warn">Informe um prazo válido, em dias.</div>';
+    return;
+  }
+
+  const minha = ++consultaAtual;
+  area.innerHTML = '<div class="card"><div class="empty"><span class="spinner"></span> consultando capacidade...</div></div>';
+  try{
+    const url = '/api/capacidade?encomenda='+encodeURIComponent(encomenda)+'&prazo_dias='+prazo;
+    const dados = await getJson(url);
+    if(minha !== consultaAtual) return; // chegou resposta de uma consulta antiga
+    area.innerHTML = renderResultado(dados);
+  }catch(e){
+    if(minha !== consultaAtual) return;
+    area.innerHTML = '<div class="alert alert-error">⚠ Não consegui consultar a capacidade. '+escapeHtml(e.message)+'</div>';
+  }
+}
+
+function renderResultado(d){
+  const itens = d.itens || [];
+  const comMolde = itens
+    .filter(i => i.dias_necessarios != null)
+    .sort((a,b) => Number(b.dias_necessarios) - Number(a.dias_necessarios));
+  const semMolde = itens.filter(i => i.dias_necessarios == null);
+  const incompleto = d.itens_analisados < d.itens_total;
+
+  // Veredito. Com 0 itens analisados a API devolve cabe_no_prazo=true
+  // (pior caso 0), o que não é uma resposta — por isso o caso à parte.
+  let vClasse, vTitulo, vSub;
+  if(d.itens_analisados === 0){
+    vClasse = 'ressalva';
+    vTitulo = 'Não dá pra responder';
+    vSub = 'Nenhum item desta encomenda tem molde cadastrado.';
+  }else if(!d.cabe_no_prazo){
+    vClasse = 'nao';
+    vTitulo = 'Não cabe no prazo';
+    vSub = 'O pior caso leva '+fmtNum(d.pior_caso_dias)+' dias — o prazo é de '+fmtNum(d.prazo_dias)+'.';
+  }else if(incompleto){
+    vClasse = 'ressalva';
+    vTitulo = 'Cabe no prazo — resultado incompleto';
+    vSub = 'Os itens analisados cabem em '+fmtNum(d.pior_caso_dias)+' de '+fmtNum(d.prazo_dias)+' dias, mas faltam itens sem molde cadastrado.';
+  }else{
+    vClasse = 'sim';
+    vTitulo = 'Cabe no prazo';
+    vSub = 'O pior caso leva '+fmtNum(d.pior_caso_dias)+' de '+fmtNum(d.prazo_dias)+' dias.';
+  }
+
+  let html = '<div class="veredito '+vClasse+'">'
+    + '<p class="v-eyebrow">Encomenda '+escapeHtml(d.encomenda)+' · prazo '+fmtNum(d.prazo_dias)+' dias</p>'
+    + '<p class="v-titulo">'+escapeHtml(vTitulo)+'</p>'
+    + '<div class="v-sub">'+escapeHtml(vSub)+'</div>'
+    + '</div>';
+
+  html += '<div class="analisados"><b>'+fmtNum(d.itens_analisados)+' de '+fmtNum(d.itens_total)+'</b> itens analisados</div>';
+
+  if(incompleto){
+    const faltam = d.itens_total - d.itens_analisados;
+    html += '<div class="aviso-incompleto" role="alert">'
+      + '<p class="a-titulo">⚠ Resultado incompleto</p>'
+      + fmtNum(faltam)+' '+(faltam === 1 ? 'item não tem' : 'itens não têm')+' molde cadastrado. '
+      + 'O sistema não sabe quantos dias '+(faltam === 1 ? 'ele leva' : 'eles levam')+' — o prazo real pode ser maior que o mostrado aqui. '
+      + 'Cadastre os moldes na tela 04 para ter a resposta completa.'
+      + '</div>';
+  }
+
+  html += '<div class="summary-strip">'
+    + '<div class="summary-box"><div class="slabel">Pior caso</div><div class="sval">'+fmtNum(d.pior_caso_dias)+' dias</div></div>'
+    + '<div class="summary-box"><div class="slabel">Total de peças</div><div class="sval">'+fmtNum(d.total_pecas)+'</div></div>'
+    + '<div class="summary-box"><div class="slabel">Total de itens</div><div class="sval">'+fmtNum(d.itens_total)+'</div></div>'
+    + '</div>';
+
+  // Itens com molde
+  html += '<div class="card"><h2>Itens com molde</h2>'
+    + '<p class="hint">Do que leva mais dias para o que leva menos.</p>';
+  if(comMolde.length){
+    html += '<div class="table-scroll"><table><thead><tr>'
+      + '<th>Produto</th><th class="tnum">Qtd.</th><th class="tnum">Cap./dia</th><th class="tnum">Dias</th>'
+      + '</tr></thead><tbody>'
+      + comMolde.map(i => {
+          const estoura = Number(i.dias_necessarios) > d.prazo_dias;
+          return '<tr>'
+            + '<td>'+escapeHtml(i.nome)+'</td>'
+            + '<td class="tnum">'+fmtNum(i.quantidade_total)+'</td>'
+            + '<td class="tnum">'+fmtNum(i.capacidade_dia)+'</td>'
+            + '<td class="tnum tdias'+(estoura ? ' estoura' : '')+'">'+fmtNum(i.dias_necessarios)+'</td>'
+            + '</tr>';
+        }).join('')
+      + '</tbody></table></div>';
+  }else{
+    html += '<div class="empty"><div class="esub">Nenhum item desta encomenda tem molde cadastrado.</div></div>';
+  }
+  html += '</div>';
+
+  // Itens sem molde
+  if(semMolde.length){
+    html += '<div class="card"><h2>Itens sem molde cadastrado</h2>'
+      + '<p class="hint">Estes itens ficaram de fora da conta.</p>'
+      + '<div class="table-scroll"><table><thead><tr><th style="width:70px;">Código</th><th>Produto</th></tr></thead><tbody>'
+      + semMolde.map(i => '<tr><td class="tcode">'+escapeHtml(i.codigo)+'</td><td>'+escapeHtml(i.nome)+'</td></tr>').join('')
+      + '</tbody></table></div></div>';
+  }
+
+  return html;
+}
+
+$('#sel-encomenda').addEventListener('change', consultar);
+$('#prazo').addEventListener('change', consultar);
+
+carregarEncomendas();
+</script>
+</body>
+</html>
