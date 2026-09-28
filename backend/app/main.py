@@ -458,7 +458,7 @@ def consulta_encomenda(encomenda: str, prazo_dias: int = 14):
             if linha["dias_necessarios"] > pior_caso:
                 pior_caso = linha["dias_necessarios"]
     itens_analisados = len(dias)
-    cabe_no_prazo = pior_caso <= prazo_dias
+    cabe_no_prazo = None if itens_analisados == 0 else pior_caso <= prazo_dias
     return {
     "encomenda": encomenda,
     "prazo_dias": prazo_dias,
@@ -470,6 +470,18 @@ def consulta_encomenda(encomenda: str, prazo_dias: int = 14):
     "itens": consulta,
 
 }
+
+@app.get("/api/encomendas", tags=["encomendas"])
+def listar_encomenda():
+    conn = get_db()
+    consulta = conn.execute("""SELECT encomenda,
+       COUNT(DISTINCT codigo) AS produtos_diferentes,
+       SUM(quantidade)        AS total_pecas
+FROM itens_recibo i
+JOIN recibos r ON r.id = i.recibo_id
+GROUP BY encomenda
+ORDER BY total_pecas DESC""").fetchall()
+    return consulta
 
 
     

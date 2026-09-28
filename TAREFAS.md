@@ -26,25 +26,26 @@ previu.
 
 **Fatia:** o produtor consegue cadastrar as informações de um molde e ver salvo.
 
-- [ ] Rota `GET /api/moldes` — listar moldes
+- [x] Rota `GET /api/moldes` — listar moldes
 - [ ] Rota `PUT /api/moldes/{codigo}` — gravar unidades, peças por enchimento,
       enchimentos por dia
 - [ ] Testar as duas no `/docs` antes de existir tela
 - [ ] Formulário mínimo de cadastro
-- [ ] Cadastrar 5 moldes reais e conferir no Neon
+- [x] Cadastrar 5 moldes reais e conferir no Neon
 - [ ] Sessão de consolidação
 
 ---
 
-## Ciclo 2 — até 04/10
+## Ciclo 2 — Tela de capacidade (aba 05)
 
-**Fatia:** o admin vê na tela se uma encomenda cabe no prazo.
+Objetivo: o dono escolhe uma encomenda e vê se cabe no prazo.
 
-- [ ] Rota `GET /api/capacidade` com a query de capacidade
-- [ ] Painel: total de itens, itens analisados, pior caso em dias, total de peças
-- [ ] Aviso visível quando houver item sem molde cadastrado
-- [ ] Aba "04 Capacidade" no front
-- [ ] Sessão de consolidação
+- [x] Rota GET /api/encomendas — lista os nomes das encomendas
+- [ ] Tela 05: seletor de encomenda + campo de prazo (padrão 14)
+- [ ] Mostrar: cabe ou não cabe, pior caso em dias, total de peças
+- [ ] Mostrar: X de Y itens analisados (aviso quando incompleto)
+- [ ] Mostrar: lista dos itens sem molde cadastrado
+- [ ] Link da aba 05 no index.html
 
 ---
 
@@ -132,7 +133,7 @@ tiver usado.
 ### Python / dados
 - [x] POO, ETL com classes
 - [x] pandas: leitura, filtro, groupby
-- [ ] Consumir API com `requests`
+- [x] Consumir API com `requests`
 - [ ] Tratar erro e paginação
 - [ ] Automação: script que roda sozinho
 
