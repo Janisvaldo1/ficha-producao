@@ -11,13 +11,12 @@ def buscar_dados():
         resposta = requests.get(API, timeout=10)
         resposta.raise_for_status()
         return resposta.json()          # ← devolve o resultado
-    except requests.exceptions.ConnectionError:
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
         print("Não consegui falar com o sistema. Ele está no ar?")
-        return None                      # ← devolve "nada" em caso de falha
+        return None
     except requests.exceptions.HTTPError:
         print(f"O sistema respondeu com erro ({resposta.status_code}).")
         return None
-
     
 dados = buscar_dados() 
 if dados is None:
