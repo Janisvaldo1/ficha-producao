@@ -16,3 +16,4 @@ backend/ficha.db
 .DS_Store
 Thumbs.db
 .env
+.claude/worktrees/
