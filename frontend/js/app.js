@@ -74,6 +74,14 @@ $$('.tab-btn').forEach(btn=>{
   });
 });
 
+// Abre a aba indicada no endereço (/#produtos, /#historico), usado pelo menu
+// das telas 04 e 05. Roda depois do init() para o histórico já estar carregado.
+function abrirAbaDoEndereco(){
+  const aba = location.hash.slice(1);
+  const btn = aba ? $('.tab-btn[data-tab="'+aba+'"]') : null;
+  if(btn) btn.click();
+}
+
 // ---------- mode toggle ----------
 $('#mode-file-btn').addEventListener('click', ()=>{
   inputMode='file';
@@ -764,24 +772,24 @@ function imprimirSelecionados(idsRecibos){
     '} ' +
     '</style>';
 
-  html += '<div style="font-family: \'IBM Plex Sans\', sans-serif; padding: 20px; color: #2B2823;">';
-  html += '<div class="print-header" style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2B2823; padding-bottom: 15px;">';
-  html += '<h1 style="font-family: \'Zilla Slab\', serif; margin: 0 0 10px 0; font-size: 26px;">🧾 Recibos de Produção</h1>';
-  html += '<h2 style="font-family: \'Zilla Slab\', serif; margin: 0 0 8px 0; font-size: 18px; font-weight: 500; color: #6B6355;">J J Marmorite</h2>';
-  html += '<p style="margin: 8px 0 0; font-size: 13px; color: #6B6355; font-weight: 500;">';
+  html += '<div style="font-family: \'Inter\', system-ui, sans-serif; padding: 20px; color: #111;">';
+  html += '<div class="print-header" style="margin-bottom: 28px; border-bottom: 1px solid #111; padding-bottom: 14px;">';
+  html += '<p style="font-family: \'JetBrains Mono\', monospace; margin: 0 0 6px 0; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #0B8F83;">J J Marmorite</p>';
+  html += '<h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em;">Recibos de Produção</h1>';
+  html += '<p style="margin: 6px 0 0; font-size: 12px; color: #555;">';
   html += recibosParaImprimir.length + ' recibo' + (recibosParaImprimir.length !== 1 ? 's' : '') + ' selecionado' + (recibosParaImprimir.length !== 1 ? 's' : '');
   html += '</p></div>';
 
   // Renderiza cada recibo
   recibosParaImprimir.forEach((calc, idx) => {
-    html += '<div class="print-recibo" style="background: #FBF9F4; border: 1px solid #CDC5B2; border-radius: 4px; margin: 0 0 25px 0; padding: 0;">';
+    html += '<div class="print-recibo" style="background: #fff; border: 1px solid #D4D8D8; border-radius: 10px; margin: 0 0 22px 0; padding: 0; overflow: hidden;">';
 
     // Cabeçalho do recibo
-    html += '<div style="padding: 14px 18px 8px; background: white; border-bottom: 1px solid #E1DBCB;">';
-    html += '<div style="font-family: \'Zilla Slab\', serif; font-weight: 600; font-size: 15px; margin: 0 0 4px 0; color: #2B2823;">';
+    html += '<div style="padding: 14px 18px 10px; background: #fff; border-bottom: 1px solid #E6E9E9;">';
+    html += '<div style="font-weight: 600; font-size: 15px; margin: 0 0 3px 0; color: #111;">';
     html += 'Recibo #' + (idx + 1) + (calc.nota ? ' — ' + escapeHtml(calc.nota) : '');
     html += '</div>';
-    html += '<div style="font-size: 12px; color: #6B6355; margin: 0;">';
+    html += '<div style="font-size: 12px; color: #555; margin: 0;">';
     html += fmtDateShort(calc.data);
     if(calc.encomenda) html += ' | Encomenda: ' + escapeHtml(calc.encomenda);
     html += '</div></div>';
@@ -790,15 +798,15 @@ function imprimirSelecionados(idsRecibos){
     html += '<div style="padding: 10px 18px;">';
     calc.itens.forEach(it => {
       if (it.ok) {
-        html += '<div style="display: grid; grid-template-columns: 50px 1fr 70px 90px; gap: 10px; padding: 7px 0; border-bottom: 1px solid #E1DBCB; align-items: center; font-size: 12px;">'
-          + '<span style="font-family: \'IBM Plex Mono\', monospace; font-weight: 500; color: #8F4223;">' + it.codigo + '</span>'
-          + '<span style="color: #2B2823;">' + escapeHtml(it.nome) + '</span>'
-          + '<span style="text-align: right; color: #6B6355;">' + it.quantidade.toFixed(0) + '× ' + it.preco.toFixed(2) + '</span>'
-          + '<span style="text-align: right; font-weight: 600; color: #B23B32;">' + fmtMoney(it.subtotal) + '</span>'
+        html += '<div style="display: grid; grid-template-columns: 50px 1fr 70px 90px; gap: 10px; padding: 7px 0; border-bottom: 1px solid #EEF0F0; align-items: center; font-size: 12px;">'
+          + '<span style="font-family: \'JetBrains Mono\', monospace; font-weight: 500; color: #777;">' + it.codigo + '</span>'
+          + '<span style="color: #111;">' + escapeHtml(it.nome) + '</span>'
+          + '<span style="text-align: right; color: #555;">' + it.quantidade.toFixed(0) + '× ' + it.preco.toFixed(2) + '</span>'
+          + '<span style="text-align: right; font-weight: 600; color: #111;">' + fmtMoney(it.subtotal) + '</span>'
           + '</div>';
       } else {
-        html += '<div style="display: grid; grid-template-columns: 50px 1fr 70px 90px; gap: 10px; padding: 7px 0; border-bottom: 1px solid #E1DBCB; align-items: center; font-size: 12px; opacity: 0.6; color: #6B6355;">'
-          + '<span style="font-family: \'IBM Plex Mono\', monospace; font-weight: 500;">' + it.codigo + '</span>'
+        html += '<div style="display: grid; grid-template-columns: 50px 1fr 70px 90px; gap: 10px; padding: 7px 0; border-bottom: 1px solid #EEF0F0; align-items: center; font-size: 12px; opacity: 0.6; color: #555;">'
+          + '<span style="font-family: \'JetBrains Mono\', monospace; font-weight: 500;">' + it.codigo + '</span>'
           + '<span>✗ não encontrado</span>'
           + '<span style="text-align: right;">' + it.quantidade.toFixed(0) + '×</span>'
           + '<span style="text-align: right;">—</span>'
@@ -808,12 +816,12 @@ function imprimirSelecionados(idsRecibos){
     html += '</div>';
 
     // Rodapé com totais
-    html += '<div style="padding: 12px 18px; background: white; border-top: 2px solid #2B2823;">';
+    html += '<div style="padding: 12px 18px; background: #F5F7F7; border-top: 1px solid #D4D8D8;">';
     html += '<div style="display: grid; grid-template-columns: 1fr auto; gap: 15px; align-items: center; margin-bottom: 8px;">';
-    html += '<span style="font-family: \'Zilla Slab\', serif; font-weight: 600; font-size: 14px; color: #2B2823;">Total a receber</span>';
-    html += '<span style="font-weight: 700; font-size: 18px; color: #B23B32;">' + fmtMoney(calc.total) + '</span>';
+    html += '<span style="font-family: \'JetBrains Mono\', monospace; font-weight: 500; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #555;">Total a receber</span>';
+    html += '<span style="font-weight: 700; font-size: 20px; letter-spacing: -0.02em; color: #111;">' + fmtMoney(calc.total) + '</span>';
     html += '</div>';
-    html += '<div style="text-align: right; font-size: 11px; color: #6B6355; padding-top: 6px; border-top: 1px solid #E1DBCB;">';
+    html += '<div style="text-align: right; font-size: 11px; color: #555; padding-top: 6px; border-top: 1px solid #E6E9E9;">';
     html += '<strong>' + calc.qtdTotal + ' peça' + (calc.qtdTotal !== 1 ? 's' : '') + '</strong>';
     html += '</div></div></div>';
   });
@@ -1112,4 +1120,4 @@ async function init(){
   }
   renderProdutosTable();
 }
-init();
+init().then(abrirAbaDoEndereco);
