@@ -8,6 +8,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
+<nav class="sidebar" aria-label="Menu principal">
+  <div class="sidebar-brand">
+    <p class="sidebar-name">J J Marmorite</p>
+    <p class="sidebar-sub">Ficha de Produção</p>
+  </div>
+  <button class="tab-btn side-link active" data-tab="calc"><span class="num">01</span><span class="side-text"><span class="side-label">Calcular</span><span class="side-desc">Novo recibo e valor a receber</span></span></button>
+  <button class="tab-btn side-link" data-tab="produtos"><span class="num">02</span><span class="side-text"><span class="side-label">Tabela de preços</span><span class="side-desc">Códigos, produtos e preços</span></span></button>
+  <button class="tab-btn side-link" data-tab="historico"><span class="num">03</span><span class="side-text"><span class="side-label">Histórico</span><span class="side-desc">Recibos salvos por encomenda</span></span></button>
+  <a class="side-link" href="/tela-04.html"><span class="num">04</span><span class="side-text"><span class="side-label">Moldes</span><span class="side-desc">Cadastro dos moldes</span></span></a>
+  <a class="side-link" href="/tela-05.html"><span class="num">05</span><span class="side-text"><span class="side-label">Capacidade</span><span class="side-desc">A encomenda cabe no prazo?</span></span></a>
+</nav>
+
 <div class="app">
 
   <div class="header">
@@ -17,12 +29,6 @@
       <p class="brand-sub">Confere código, soma quantidade × preço, guarda o histórico.</p>
     </div>
     <div class="stamp" id="today-stamp">—</div>
-  </div>
-
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="calc"><span class="num">01</span>Calcular</button>
-    <button class="tab-btn" data-tab="produtos"><span class="num">02</span>Tabela de preços</button>
-    <button class="tab-btn" data-tab="historico"><span class="num">03</span>Histórico</button>
   </div>
 
   <!-- ===== TAB: CALCULAR ===== -->
@@ -103,14 +109,6 @@
     <div id="historico-content">
       <div class="empty"><span class="spinner"></span> carregando histórico...</div>
     </div>
-  </div>
-
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="calc"><span class="num">01</span>Calcular</button>
-    <button class="tab-btn" data-tab="produtos"><span class="num">02</span>Tabela de preços</button>
-    <button class="tab-btn" data-tab="historico"><span class="num">03</span>Histórico</button>
-    <a class="tab-btn" href="/tela-04.html"><span class="num">04</span>Moldes</a>
-    <a class="tab-btn" href="/tela-05.html"><span class="num">05</span>Capacidade</a>
   </div>
 
 </div>
