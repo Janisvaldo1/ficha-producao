@@ -58,7 +58,7 @@ agora não é técnico: é o inventário dos moldes.
 
 **Pendência técnica que ficou:**
 
-- [ ] `cabe_no_prazo` devolve `true` quando `itens_analisados` é 0 — o pior
+- [x] `cabe_no_prazo` devolve `true` quando `itens_analisados` é 0 — o pior
       caso fica em 0 e a comparação passa. Deveria devolver `null`.
       Correção: `None if itens_analisados == 0 else pior_caso <= prazo_dias`
 
@@ -146,6 +146,7 @@ Cada uma com o gatilho que a tira daqui.
       completo. Com dado parcial, responderia errado com confiança.
 - [ ] **Quebrar o `main.py` com APIRouter.** Gatilho: quando passar de ~400
       linhas.
+- [ ] **Fluxo de reposição de moldes. Tabela de solicitações:** molde pedido, data do pedido, setor responsável, data de entrega, quantidade, peso. Gerência acompanha prazo. Depende de login por setor. Gatilho: depois de 17/11.
 
 ---
 
