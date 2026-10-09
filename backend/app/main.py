@@ -430,7 +430,7 @@ def atualizar_molde(produto_codigo: str, req: schemas.AtualizarMoldeRequest):
         conn.close()
 
 @app.get("/api/capacidade", tags=["capacidade"])
-def consulta_encomenda(encomenda: str, prazo_dias: int = 14):
+def consulta_encomenda(encomenda: str, prazo_dias: int = 10):
     conn = get_db()
     consulta = conn.execute("""
     SELECT i.codigo,
@@ -452,12 +452,20 @@ def consulta_encomenda(encomenda: str, prazo_dias: int = 14):
     total_pecas = 0
     dias = []
     pior_caso = 0
+    itens_em_falta = 0
+    itens_nao_conferidos = 0
+    
     for linha in consulta:
         total_pecas = total_pecas + linha["quantidade_total"]
         if linha["dias_necessarios"] is not None:
             dias.append(linha["dias_necessarios"])
             if linha["dias_necessarios"] > pior_caso:
                 pior_caso = linha["dias_necessarios"]
+        else:
+            if linha["cadastrado"]:
+                itens_em_falta += 1
+            else:
+                itens_nao_conferidos += 1
     itens_analisados = len(dias)
     cabe_no_prazo = None if itens_analisados == 0 else pior_caso <= prazo_dias
     return {
@@ -469,6 +477,8 @@ def consulta_encomenda(encomenda: str, prazo_dias: int = 14):
     "itens_analisados": itens_analisados,
     "cabe_no_prazo": cabe_no_prazo,
     "itens": consulta,
+    "itens_em_falta": itens_em_falta,
+    "itens_nao_conferidos": itens_nao_conferidos,
 
 }
 

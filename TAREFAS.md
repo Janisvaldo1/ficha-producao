@@ -68,11 +68,11 @@ agora não é técnico: é o inventário dos moldes.
 
 **Fatia:** inventário real dos moldes. É isto que destrava tudo.
 
-- [ ] Conversar com o gestor sobre o mutirão de cadastro
-- [ ] Definir a fila: os ~120 produtos que já apareceram em encomenda
-- [ ] Acompanhar os produtores preenchendo
-- [ ] Corrigir o que a realidade mostrar que o modelo não previu
-- [ ] Rodar a capacidade de uma encomenda real com dado majoritariamente
+- [x] Conversar com o gestor sobre o mutirão de cadastro
+- [x] Definir a fila: os ~120 produtos que já apareceram em encomenda
+- [x] Acompanhar os produtores preenchendo
+- [x] Corrigir o que a realidade mostrar que o modelo não previu
+- [x] Rodar a capacidade de uma encomenda real com dado majoritariamente
       preenchido
 - [ ] Sessão de consolidação
 
@@ -82,17 +82,27 @@ e qualquer evolução futura (alertas, IA) responderia sobre dado incompleto.
 
 ---
 
-## Ciclo 4 — até 01/11
+## Ciclo 4 — Simulação de encomenda, até 01/11
 
-**Fatia:** custo do molde e ponto de equilíbrio.
+**Fatia:** analisar uma encomenda nova, antes de produzir, e guardar a análise.
 
-- [ ] Campos de custo preenchidos pelo admin
-- [ ] Cálculo: quantas peças o molde precisa produzir para se pagar
-- [ ] Mostrar na tela junto com a capacidade
-- [ ] Sessão de consolidação
+**Por que isto e não o custo do molde:** hoje o sistema só analisa encomendas
+já entregues, porque elas vêm de `recibos`. Ele responde sobre o passado. Sem
+simulação, não apoia a decisão para a qual foi construído.
 
-**Depende do Ciclo 3.** Se o inventário atrasar, este é o ciclo a cortar.
+Fechar o que sobrou do Ciclo 3:
+- [ ] Corrigir a frase "sem molde cadastrado" na tela 05 — os moldes estão
+      cadastrados, estão é com zero unidades
+- [ ] Contar no resumo da rota: com molde, em falta, não conferidos
 
+A fatia:
+- [ ] Tabelas `simulacao` e `simulacao_item` no Neon
+- [ ] Rota POST /api/simulacoes — cria a partir de uma lista de itens
+- [ ] Rota GET /api/simulacoes — lista as anteriores
+- [ ] Rota de capacidade aceitar `simulacao_id` além de `encomenda`
+- [ ] Tela: criar simulação a partir do xlsx ou do colar, ver o resultado
+- [ ] Resultado imprimível, para mandar à secretária
+- [ ] Testar com uma encomenda real recebida
 ---
 
 ## Ciclo 5 — até 17/11
@@ -147,6 +157,18 @@ Cada uma com o gatilho que a tira daqui.
 - [ ] **Quebrar o `main.py` com APIRouter.** Gatilho: quando passar de ~400
       linhas.
 - [ ] **Fluxo de reposição de moldes. Tabela de solicitações:** molde pedido, data do pedido, setor responsável, data de entrega, quantidade, peso. Gerência acompanha prazo. Depende de login por setor. Gatilho: depois de 17/11.
+- [ ] **Login por setor — projeto prioritário depois de 17/11.**
+      Contexto: a secretária monta a encomenda sem saber quais moldes existem,
+      e o produtor vira mensageiro entre ela e o setor de moldes. Com login,
+      cada setor vê o que lhe cabe e resolvem entre si — o problema volta para
+      quem tem poder de resolver.
+      Estimativa: 3–4 semanas (usuários, hash de senha, token, validação nas
+      rotas, tela, front guardando o token).
+      Por que não agora: não cabe junto com simulação e relatório; e o valor
+      pode ser provado antes, mandando o resultado impresso para a secretária.
+
+- [ ] **Custo do molde e ponto de equilíbrio.** Era o Ciclo 4; saiu porque é
+      análise, não decisão operacional. Retomar depois da simulação.
 
 ---
 
@@ -215,8 +237,18 @@ tiver usado.
 
 ## Decisões tomadas
 
-Uma linha por decisão, com o motivo. É isso que alimenta o README e o
-relatório depois.
+- **O usuário da análise é a secretária, não o dono** — ela monta a encomenda
+  a partir dos pedidos dos clientes. A análise precisa acontecer antes de a
+  encomenda chegar ao produtor, senão ele vira o mensageiro.
+- **Simulações em tabela separada, não como marca em `recibos`** — `recibos`
+  significa trabalho entregue e conferido com a gerência. Uma simulação ali
+  poderia entrar num fechamento de mês por engano, e erro de dinheiro é
+  diferente de erro de relatório.
+- **Entregar o resultado impresso em vez de dar acesso ao sistema** — prova o
+  valor sem depender de login e sem precisar convencer alguém de outra empresa
+  a usar um sistema do prestador.
+- **A encomenda vem em xlsx e Word da secretária** — formato resolvido, não
+  precisa ler PDF.
 
 ### Produto e modelagem
 
