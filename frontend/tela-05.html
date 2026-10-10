@@ -177,12 +177,22 @@ async function consultar(){
   }
 }
 
+function tabelaItens(lista){
+  return '<div class="table-scroll"><table><thead><tr><th style="width:70px;">Código</th><th>Produto</th></tr></thead><tbody>'
+    + lista.map(i => '<tr><td class="tcode">'+escapeHtml(i.codigo)+'</td><td>'+escapeHtml(i.nome)+'</td></tr>').join('')
+    + '</tbody></table></div>';
+}
+
 function renderResultado(d){
   const itens = d.itens || [];
   const comMolde = itens
     .filter(i => i.dias_necessarios != null)
     .sort((a,b) => Number(b.dias_necessarios) - Number(a.dias_necessarios));
   const semMolde = itens.filter(i => i.dias_necessarios == null);
+  const emFalta = semMolde.filter(i => i.cadastrado === true);
+  const naoConferidos = semMolde.filter(i => i.cadastrado !== true);
+  const nEmFalta = Number(d.itens_em_falta) || 0;
+  const nNaoConferidos = Number(d.itens_nao_conferidos) || 0;
   const incompleto = d.itens_analisados < d.itens_total;
 
   // Veredito. Com 0 itens analisados a API devolve cabe_no_prazo=true
@@ -191,7 +201,7 @@ function renderResultado(d){
   if(d.itens_analisados === 0){
     vClasse = 'ressalva';
     vTitulo = 'Não dá pra responder';
-    vSub = 'Nenhum item desta encomenda tem molde cadastrado.';
+    vSub = 'Nenhum item desta encomenda pôde ser analisado. Ou o molde está em falta, ou ainda não foi conferido.';
   }else if(!d.cabe_no_prazo){
     vClasse = 'nao';
     vTitulo = 'Não cabe no prazo';
@@ -199,7 +209,7 @@ function renderResultado(d){
   }else if(incompleto){
     vClasse = 'ressalva';
     vTitulo = 'Cabe no prazo — resultado incompleto';
-    vSub = 'Os itens analisados cabem em '+fmtNum(d.pior_caso_dias)+' de '+fmtNum(d.prazo_dias)+' dias, mas faltam itens sem molde cadastrado.';
+    vSub = 'Os itens analisados cabem em '+fmtNum(d.pior_caso_dias)+' de '+fmtNum(d.prazo_dias)+' dias, mas alguns itens ficaram fora da conta. Veja abaixo.';
   }else{
     vClasse = 'sim';
     vTitulo = 'Cabe no prazo';
@@ -214,13 +224,20 @@ function renderResultado(d){
 
   html += '<div class="analisados"><b>'+fmtNum(d.itens_analisados)+' de '+fmtNum(d.itens_total)+'</b> itens analisados</div>';
 
-  if(incompleto){
-    const faltam = d.itens_total - d.itens_analisados;
+  if(nEmFalta + nNaoConferidos > 0){
+    let texto = '';
+    if(nEmFalta > 0){
+      texto += fmtNum(nEmFalta)+' '+(nEmFalta === 1 ? 'item tem' : 'itens têm')+' molde conferido, mas nenhuma unidade disponível. '
+        + 'Peça a reposição ao setor de moldes. ';
+    }
+    if(nNaoConferidos > 0){
+      texto += fmtNum(nNaoConferidos)+' '+(nNaoConferidos === 1 ? 'item ainda não teve' : 'itens ainda não tiveram')+' o molde conferido. '
+        + 'Confira na tela 04. ';
+    }
+    texto += 'O prazo real pode ser maior que o mostrado aqui.';
     html += '<div class="aviso-incompleto" role="alert">'
       + '<p class="a-titulo">⚠ Resultado incompleto</p>'
-      + fmtNum(faltam)+' '+(faltam === 1 ? 'item não tem' : 'itens não têm')+' molde cadastrado. '
-      + 'O sistema não sabe quantos dias '+(faltam === 1 ? 'ele leva' : 'eles levam')+' — o prazo real pode ser maior que o mostrado aqui. '
-      + 'Cadastre os moldes na tela 04 para ter a resposta completa.'
+      + escapeHtml(texto)
       + '</div>';
   }
 
@@ -248,17 +265,24 @@ function renderResultado(d){
         }).join('')
       + '</tbody></table></div>';
   }else{
-    html += '<div class="empty"><div class="esub">Nenhum item desta encomenda tem molde cadastrado.</div></div>';
+    html += '<div class="empty"><div class="esub">Nenhum item desta encomenda pôde ser analisado. Ou o molde está em falta, ou ainda não foi conferido.</div></div>';
   }
   html += '</div>';
 
-  // Itens sem molde
-  if(semMolde.length){
-    html += '<div class="card"><h2>Itens sem molde cadastrado</h2>'
-      + '<p class="hint">Estes itens ficaram de fora da conta.</p>'
-      + '<div class="table-scroll"><table><thead><tr><th style="width:70px;">Código</th><th>Produto</th></tr></thead><tbody>'
-      + semMolde.map(i => '<tr><td class="tcode">'+escapeHtml(i.codigo)+'</td><td>'+escapeHtml(i.nome)+'</td></tr>').join('')
-      + '</tbody></table></div></div>';
+  // Moldes em falta: conferidos, mas sem unidade disponível
+  if(emFalta.length){
+    html += '<div class="card"><h2>Moldes em falta</h2>'
+      + '<p class="hint">Estes itens não têm molde disponível — é preciso o setor de moldes fornecer.</p>'
+      + tabelaItens(emFalta)
+      + '</div>';
+  }
+
+  // Moldes não conferidos: ninguém contou as unidades ainda
+  if(naoConferidos.length){
+    html += '<div class="card"><h2>Moldes não conferidos</h2>'
+      + '<p class="hint">Ninguém conferiu quantas unidades destes moldes existem.</p>'
+      + tabelaItens(naoConferidos)
+      + '</div>';
   }
 
   return html;

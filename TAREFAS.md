@@ -91,9 +91,12 @@ já entregues, porque elas vêm de `recibos`. Ele responde sobre o passado. Sem
 simulação, não apoia a decisão para a qual foi construído.
 
 Fechar o que sobrou do Ciclo 3:
-- [ ] Corrigir a frase "sem molde cadastrado" na tela 05 — os moldes estão
+- [x] Corrigir a frase "sem molde cadastrado" na tela 05 — os moldes estão
       cadastrados, estão é com zero unidades
 - [ ] Contar no resumo da rota: com molde, em falta, não conferidos
+- [ ] Rotas de simulação nascem em `routers/simulacoes.py` com APIRouter
+      (o `main.py` bateu 504 linhas em 10/10 — gatilho de ~400 disparado;
+       migração das rotas antigas fica para a consolidação do ciclo)
 
 A fatia:
 - [ ] Tabelas `simulacao` e `simulacao_item` no Neon
@@ -301,3 +304,22 @@ tiver usado.
   desatualizada no Render já derrubou a produção uma vez.
 - **Caminho absoluto, não relativo** — `load_dotenv(BASE_DIR / ".env")`. Onde
   você está não pode decidir se o programa funciona.
+
+## Como quebrar um desafio novo — "de trás pra frente"
+
+Procedimento fixo quando a tarefa é **produzir** algo (relatório, tela, rota).
+Faz o desenho de trás pra frente; a execução sai de frente pra trás.
+
+1. **Escrever a resposta final, com números inventados.** A linha, a frase, o
+   quadro — exatamente como vai aparecer. Não a pergunta: a resposta.
+2. **Circular cada número e cada palavra que varia.** Cada um é uma variável.
+   A lista é finita e está na frente.
+3. **Para cada variável: de onde ela vem?** Só três respostas possíveis —
+   **fato** (está no banco), **agregação** (soma ou contagem de várias linhas),
+   **consequência** (sai de outras variáveis). Se não houver resposta, o dado
+   não existe: decidir entre medir outra coisa ou criar o registro.
+4. **Ordenar: fatos → agregações → consequências.** Essa ordem é o algoritmo.
+   Só depois disso, código.
+
+Para problemas de **diagnosticar** (está lento, caiu, o número não bate) o
+procedimento é outro: parte do sintoma e vai estreitando.

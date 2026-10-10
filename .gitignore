@@ -11,6 +11,7 @@ backend/ficha.db
 
 # Logs locais de desenvolvimento
 *.log
+.claude/
 
 # SO
 .DS_Store
