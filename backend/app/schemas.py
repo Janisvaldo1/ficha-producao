@@ -115,3 +115,11 @@ class AtualizarMoldeRequest(BaseModel):
     unidades_disponiveis: int
     pecas_por_enchimento: int
     enchimentos_por_dia: int
+
+class ItemSimulacao(BaseModel):
+    codigo: str
+    quantidade: int
+
+class CriarSimulacaoRequest(BaseModel):
+    observacao: str
+    itens: list[ItemSimulacao]

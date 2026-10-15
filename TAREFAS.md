@@ -74,7 +74,7 @@ agora não é técnico: é o inventário dos moldes.
 - [x] Corrigir o que a realidade mostrar que o modelo não previu
 - [x] Rodar a capacidade de uma encomenda real com dado majoritariamente
       preenchido
-- [ ] Sessão de consolidação
+- [x] Sessão de consolidação
 
 **Por que este ciclo importa mais que os outros:** sem inventário, o relatório
 de extensão não tem antes-e-depois, o cálculo de custo do Ciclo 4 não tem base,
@@ -323,3 +323,5 @@ Faz o desenho de trás pra frente; a execução sai de frente pra trás.
 
 Para problemas de **diagnosticar** (está lento, caiu, o número não bate) o
 procedimento é outro: parte do sintoma e vai estreitando.
+
+TIMESTAMPTZ, não TIMESTAMP. O servidor do Neon roda em UTC e o trabalho é feito à noite — uma simulação das 21h30 era gravada no dia seguinte. O banco guarda o instante; a conversão é de quem exibe.

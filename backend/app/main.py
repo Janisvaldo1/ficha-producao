@@ -11,6 +11,7 @@ from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
+from app.routers import simulacoes
 
 from . import schemas
 from .database import get_db, init_db
@@ -20,6 +21,7 @@ FRONTEND_DIR = BASE_DIR.parent / "frontend"
 
 app = FastAPI(title="Ficha de Produção — J J Marmorite")
 
+app.include_router(simulacoes.router)
 
 @app.on_event("startup")
 def on_startup():
@@ -493,6 +495,9 @@ JOIN recibos r ON r.id = i.recibo_id
 GROUP BY encomenda
 ORDER BY total_pecas DESC""").fetchall()
     return consulta
+
+
+ 
 
 
     
