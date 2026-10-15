@@ -23,3 +23,19 @@ def simulacao(req: schemas.CriarSimulacaoRequest ):
         ).fetchone()
     finally:
         conn.close()
+
+@router.get("")
+def listar_simulacoes():
+    conn = get_db()
+    try:
+        consulta = conn.execute("""
+        SELECT simulacao.id, data, observacao,
+            COUNT(DISTINCT simulacao_item.codigo) AS produtos_diferentes,
+            SUM(quantidade)        AS total_pecas
+        FROM simulacao
+        JOIN simulacao_item ON simulacao_item.simulacao_id = simulacao.id
+    GROUP BY simulacao.id, data, observacao
+    ORDER BY data DESC """).fetchall()
+        return consulta
+    finally:
+        conn.close()
