@@ -64,7 +64,7 @@ agora não é técnico: é o inventário dos moldes.
 
 ---
 
-## Ciclo 3 — ATUAL, até 18/10
+## Ciclo 3 — até 18/10
 
 **Fatia:** inventário real dos moldes. É isto que destrava tudo.
 
@@ -82,7 +82,7 @@ e qualquer evolução futura (alertas, IA) responderia sobre dado incompleto.
 
 ---
 
-## Ciclo 4 — Simulação de encomenda, até 01/11
+## Ciclo 4 — ATUAL - Simulação de encomenda, até 01/11
 
 **Fatia:** analisar uma encomenda nova, antes de produzir, e guardar a análise.
 
@@ -93,15 +93,15 @@ simulação, não apoia a decisão para a qual foi construído.
 Fechar o que sobrou do Ciclo 3:
 - [x] Corrigir a frase "sem molde cadastrado" na tela 05 — os moldes estão
       cadastrados, estão é com zero unidades
-- [ ] Contar no resumo da rota: com molde, em falta, não conferidos
-- [ ] Rotas de simulação nascem em `routers/simulacoes.py` com APIRouter
+- [x] Contar no resumo da rota: com molde, em falta, não conferidos
+- [x] Rotas de simulação nascem em `routers/simulacoes.py` com APIRouter
       (o `main.py` bateu 504 linhas em 10/10 — gatilho de ~400 disparado;
        migração das rotas antigas fica para a consolidação do ciclo)
 
 A fatia:
-- [ ] Tabelas `simulacao` e `simulacao_item` no Neon
-- [ ] Rota POST /api/simulacoes — cria a partir de uma lista de itens
-- [ ] Rota GET /api/simulacoes — lista as anteriores
+- [x] Tabelas `simulacao` e `simulacao_item` no Neon
+- [x] Rota POST /api/simulacoes — cria a partir de uma lista de itens
+- [x] Rota GET /api/simulacoes — lista as anteriores
 - [ ] Rota de capacidade aceitar `simulacao_id` além de `encomenda`
 - [ ] Tela: criar simulação a partir do xlsx ou do colar, ver o resultado
 - [ ] Resultado imprimível, para mandar à secretária
@@ -253,6 +253,8 @@ tiver usado.
 - **A encomenda vem em xlsx e Word da secretária** — formato resolvido, não
   precisa ler PDF.
 
+- **TIMESTAMPTZ, não TIMESTAMP** O servidor do Neon roda em UTC e o trabalho é feito à noite — uma simulação das 21h30 era gravada no dia seguinte. O banco guarda o instante; a conversão é de quem exibe.
+
 ### Produto e modelagem
 
 - **Evoluir a Ficha de Produção em vez de criar um sistema novo** — o sistema
@@ -324,4 +326,3 @@ Faz o desenho de trás pra frente; a execução sai de frente pra trás.
 Para problemas de **diagnosticar** (está lento, caiu, o número não bate) o
 procedimento é outro: parte do sintoma e vai estreitando.
 
-TIMESTAMPTZ, não TIMESTAMP. O servidor do Neon roda em UTC e o trabalho é feito à noite — uma simulação das 21h30 era gravada no dia seguinte. O banco guarda o instante; a conversão é de quem exibe.

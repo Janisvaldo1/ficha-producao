@@ -435,20 +435,25 @@ def atualizar_molde(produto_codigo: str, req: schemas.AtualizarMoldeRequest):
 def consulta_encomenda(encomenda: str, prazo_dias: int = 10):
     conn = get_db()
     consulta = conn.execute("""
-    SELECT i.codigo,
-           i.nome,
-           m.cadastrado,
-           SUM(i.quantidade) AS quantidade_total,
-           MAX(m.unidades_disponiveis * m.pecas_por_enchimento * m.enchimentos_por_dia) AS capacidade_dia,
-           CEIL(CAST(SUM(i.quantidade) AS numeric) /
-                NULLIF(MAX(m.unidades_disponiveis * m.pecas_por_enchimento * m.enchimentos_por_dia), 0)) AS dias_necessarios
-    FROM itens_recibo i
-    JOIN recibos r ON r.id = i.recibo_id
-    LEFT JOIN molde m ON m.produto_codigo = i.codigo
-    WHERE r.encomenda = ?
-    GROUP BY i.codigo, i.nome, m.cadastrado
-    ORDER BY dias_necessarios DESC NULLS LAST
-""", (encomenda,)).fetchall()
+    WITH itens AS (
+                SELECT i.codigo,
+                i.nome,
+                i.quantidade
+            FROM itens_recibo i
+            JOIN recibos r ON r.id = i.recibo_id
+            WHERE r.encomenda = ?
+        )
+        SELECT itens.codigo,
+           itens.nome,
+           SUM(itens.quantidade) AS quantidade_total,
+           molde.cadastrado,
+           MAX(molde.unidades_disponiveis * molde.pecas_por_enchimento * molde.enchimentos_por_dia) AS capacidade_dia,
+           CEIL(CAST(SUM(itens.quantidade) AS numeric) /
+                NULLIF(MAX(molde.unidades_disponiveis * molde.pecas_por_enchimento * molde.enchimentos_por_dia), 0)) AS dias_necessarios
+        FROM itens
+        LEFT JOIN molde ON molde.produto_codigo = itens.codigo
+        GROUP BY itens.codigo, itens.nome, molde.cadastrado
+        ORDER BY dias_necessarios DESC NULLS LAST """, (encomenda,)).fetchall()
     
     qtd_itens = len(consulta)
     total_pecas = 0
