@@ -1,20 +1,60 @@
-# Python
-backend/venv/
+# ===== CRÍTICO: credenciais e dados =====
+# Nunca suba estes arquivos. O .env tem a string de conexão do Neon
+# (usuário e senha do banco). Uma vez no histórico do Git, fica lá
+# para sempre, mesmo que você apague o arquivo depois.
+.env
+.env.*
+!.env.example
 
+# Bancos locais
+*.db
+*.sqlite
+*.sqlite3
+
+# ===== Python =====
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
 
+# Ambientes virtuais
 venv/
+env/
+ENV/
+.venv/
 
-# Banco de dados (gerado em runtime a partir do seed — não versiona dado, só schema/código)
-backend/ficha.db
+# Distribuição / build
+build/
+dist/
+*.egg-info/
+.eggs/
 
-# Logs locais de desenvolvimento
+# Testes e cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ===== Logs =====
 *.log
+uvicorn.log
+
+# ===== Editor / IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===== Sistema operacional =====
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ===== Ferramentas =====
 .claude/
 
-# SO
-.DS_Store
-Thumbs.db
-.env
-.claude/worktrees/
+# ===== Frontend (se usar Node) =====
+node_modules/
+.next/
+dist/
