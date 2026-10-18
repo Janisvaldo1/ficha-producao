@@ -1,107 +1,145 @@
-# Ficha de Produção — J J Marmorite
+# Ficha de Produção
 
-Sistema web que uso na fábrica onde trabalho, uma empresa de artesanato em resina e pó de mármore. Começou para resolver um problema meu, calcular quanto eu tinha a receber por lote produzido, e virou uma ferramenta para a fábrica saber se tem molde para atender cada encomenda.
+Sistema de controle de produção para ateliê de artesanato em resina. Substitui o controle em papel por um banco de dados consultável, e responde perguntas que antes ninguém conseguia responder.
 
-Trabalho na produção, no setor de peças pequenas. Construí o sistema porque sentia o problema todo dia.
+Projeto em desenvolvimento, já em uso no dia a dia da empresa onde trabalho. O sistema responde a pergunta de ponta a ponta (banco, API e tela), hoje cobrindo parte do catálogo de moldes: o gargalo atual não é técnico, é o inventário físico que ainda está sendo cadastrado.
+
+---
 
 ## O problema
 
-**Falta informação entre os setores.** A fábrica tem mais de 250 modelos de molde e recebe encomendas de 400 a 500 peças, espalhadas em muitos modelos diferentes. Quando falta um molde ou um material, cada setor reclama, o processo trava e ninguém sabe onde resolver. A encomenda é aceita sem ninguém saber se existe molde para ela, e a decisão vira discussão, não número.
+A ficha de produção vivia no papel. Cada recibo, cada peça produzida, cada molde usado ficava registrado à mão. Isso gerava três problemas:
 
-**O cálculo do recibo era manual.** Depois de produzir um lote, recebo um recibo em `.xlsx` só com código, descrição, cor e quantidade, sem valor nenhum. Para saber quanto recebo, eu precisava procurar cada código numa tabela de preços separada e multiplicar à mão. Lento e fácil de errar.
+- A informação se perdia. Papel some, molha, é descartado.
+- Não dava para responder perguntas simples: quanto essa peça faturou no trimestre, qual molde está parado, quanto tempo leva para produzir uma encomenda.
+- A decisão de aceitar ou não uma encomenda com prazo apertado era feita no achismo.
 
 ## O que o sistema faz
 
-- Lê o `.xlsx` do recibo e encontra sozinho as colunas de código e quantidade, mesmo que a ordem ou o nome do cabeçalho mudem. Também aceita digitar os itens à mão.
-- Cruza cada código com a tabela de preços e calcula o subtotal e o total do recibo.
-- Avisa na hora quando um código não está cadastrado, com atalho para cadastrar sem sair da tela.
-- Guarda o histórico dos recibos, com resumo do mês e total acumulado.
-- Gera um texto de recibo pronto para mandar no WhatsApp ou por e-mail.
-- **Capacidade por encomenda** (`/api/capacidade`): para cada peça da encomenda, calcula quantas peças os moldes disponíveis conseguem produzir por dia e quantos dias a peça vai levar. Mostra primeiro as peças mais demoradas, e separa as que estão sem molde disponível ou com molde ainda não cadastrado.
+- Registra recibos e os itens de cada recibo
+- Cadastra e controla moldes, com capacidade de produção por molde
+- Calcula se uma encomenda cabe em um prazo, cruzando a quantidade pedida com a capacidade real de produção
+- Gera relatório mensal de uso de moldes
 
-## Situação atual
+---
 
-O sistema roda no setor de peças pequenas, com a secretária e a gerência acompanhando. Estamos num piloto de 60 a 90 dias. Se der resultado, ele vai para os outros setores: peças médias e grandes ocas, moldes, embalagem e expedição.
+## Stack
 
-Levar para outros setores não é só copiar. Cada setor tem suas regras e condições, então o sistema vai precisar ser adaptado a cada um.
+| Camada | Tecnologia |
+|---|---|
+| API | Python, FastAPI |
+| Banco | PostgreSQL (Neon), SQLite em desenvolvimento |
+| Consultas | SQL (CTE, JOIN, agregações) |
+| Servidor | Uvicorn |
 
-## Arquitetura
+---
+
+## Modelagem
+
+Antes de escrever código, mapeei o processo da encomenda em dois diagramas.
+
+### Fluxo do processo (AS-IS)
+
+![Fluxo do processo](docs/fluxo-processo.png)
+
+O mapeamento revelou dois pontos que não eram visíveis no dia a dia:
+
+- **Gargalo de ~14 dias**: quando o molde não existe, a encomenda fica parada esperando a fabricação
+- **Atividades fora do setor**: parte do que a produção executa hoje deveria ser responsabilidade de outro setor
+
+### Casos de uso
+
+![Casos de uso](docs/casos-de-uso.png)
+
+Atores: Produtor, Secretária, Dono, Setor de Moldes e Tempo. O Tempo aparece como ator porque o relatório mensal não é disparado por uma pessoa, e sim pela virada do mês.
+
+### Estrutura de dados
+
+As tabelas principais são `recibos`, `itens_recibo`, `molde` e `produtos`.
+
+A relação entre recibo e item usa integridade referencial com remoção em cascata: um item não existe sem o recibo ao qual pertence, então se o recibo é removido, seus itens vão junto. Essa não é uma decisão de sintaxe, é uma decisão sobre como o dado deve se comportar.
+
+---
+
+## Destaque técnico: cálculo de capacidade
+
+O endpoint `/api/capacidade` recebe uma encomenda e um prazo, e responde se a produção cabe no período.
+
+A capacidade de cada molde é calculada como:
 
 ```
-ficha-producao/
-├── backend/
-│   ├── app/
-│   │   ├── main.py        → FastAPI: rotas da API + serve o frontend
-│   │   ├── database.py    → conexão com o banco (SQLite ou PostgreSQL) e schema
-│   │   ├── schemas.py     → validação de entrada e saída (Pydantic)
-│   │   └── routers/       → rotas separadas por assunto
-│   ├── data/
-│   │   └── produtos_seed.json  → catálogo inicial (174 produtos), usado só
-│   │                              para popular o banco na primeira execução
-│   ├── scripts/           → scripts de apoio (relatórios)
-│   ├── .env.example       → modelo de configuração, sem senha real
-│   └── requirements.txt
-├── frontend/
-│   ├── index.html
-│   ├── css/style.css
-│   └── js/app.js          → interface + leitura do .xlsx (SheetJS) + chamadas à API
-└── README.md
+unidades_disponiveis × pecas_por_enchimento × enchimentos_por_dia = capacidade por dia
 ```
 
-**Backend:** Python + [FastAPI](https://fastapi.tiangolo.com/), com SQL escrito à mão, sem ORM. Num projeto desse tamanho, o SQL direto deixa claro o que o banco está fazendo, e é justamente o que quero dominar, porque estou me formando para engenharia de dados.
+A partir disso, a query calcula quantos dias cada item precisa e retorna o pior caso.
 
-**Frontend:** HTML, CSS e JavaScript puros, sem framework. O `.xlsx` é lido no navegador com [SheetJS](https://sheetjs.com/). Toda a regra de negócio (cruzar código com preço, calcular total, calcular capacidade) fica no backend.
+Dois pontos de atenção resolvidos na consulta:
 
-**Um comando só:** o FastAPI serve o frontend direto (`StaticFiles`), então o projeto inteiro sobe com um único comando, sem dois processos e sem configurar CORS.
+**Divisão por zero.** Quando um item não tem molde cadastrado, ou o molde está sem unidades disponíveis, a capacidade dá 0 e a divisão quebra a query inteira. O `NULLIF` troca o 0 por `NULL`, o cálculo retorna `NULL` em vez de erro, e o item aparece sinalizado no fim da lista em vez de derrubar a resposta.
 
-### Banco de dados: SQLite no desenvolvimento, PostgreSQL em produção
+**Legibilidade.** A consulta usa CTE (`WITH`) para separar a seleção dos itens da encomenda do cálculo de capacidade, em vez de aninhar tudo em uma subquery só.
 
-O sistema escolhe o banco pela variável de ambiente `DATABASE_URL`. Se ela existir, conecta no PostgreSQL (via `psycopg2`). Se não existir, usa um SQLite local (`ficha.db`), criado automaticamente na primeira execução.
+Resposta do endpoint:
 
-Fiz assim porque no meu PC quero testar rápido, sem depender de servidor, e no piloto da fábrica preciso de um banco de verdade. Em produção, o PostgreSQL roda no [Neon](https://neon.tech), um Postgres gerenciado na nuvem. A troca entre os dois é só uma linha no `.env`, o código não muda. O schema é o mesmo nos dois, com pequenas adaptações (`SERIAL` no Postgres, `AUTOINCREMENT` no SQLite).
-
-O arquivo `ficha.db` e o `.env` ficam fora do Git. Só o schema e o catálogo inicial são versionados.
-
-### Modelo de dados
-
+```json
+{
+  "encomenda": "...",
+  "prazo_dias": 14,
+  "total_pecas": 0,
+  "pior_caso_dias": 0,
+  "itens_total": 0,
+  "itens_analisados": 0,
+  "cabe_no_prazo": true,
+  "itens": []
+}
 ```
-produtos       (codigo PK, nome, preco)
-recibos        (id PK, data, nota, encomenda, total, qtd_total)
-itens_recibo   (id PK, recibo_id FK → recibos, codigo, nome, quantidade, preco, subtotal, ok)
-molde          (produto_codigo, unidades_disponiveis, pecas_por_enchimento,
-                enchimentos_por_dia, cadastrado, ...)
-```
 
-`itens_recibo` guarda uma **cópia** do nome e do preço no momento do cálculo, não uma referência à tabela `produtos`. É de propósito: se o preço mudar depois, os recibos antigos continuam mostrando o valor que foi calculado naquela data. Funciona como uma nota fiscal, que não muda se o preço da loja mudar amanhã.
-
-A capacidade de um molde por dia é `unidades_disponiveis × pecas_por_enchimento × enchimentos_por_dia`. Os dias necessários para uma peça são a quantidade pedida dividida por essa capacidade, arredondada para cima. Quando a capacidade dá zero (molde estragado ou sem unidade), a consulta usa `NULLIF` para não dividir por zero, e a peça aparece no fim da lista como pendência.
+---
 
 ## Como rodar
 
-Pré-requisito: Python 3.10+.
-
 ```bash
-cd backend
+git clone https://github.com/Janisvaldo1/ficha-producao.git
+cd ficha-producao/backend
+
 python -m venv venv
-venv\Scripts\activate        # Windows (Git Bash: source venv/Scripts/activate)
+.\venv\Scripts\Activate.ps1      # Windows
+# source venv/bin/activate       # Linux/macOS
+
 pip install -r requirements.txt
+
+cp .env.example .env             # preencha com sua string de conexão
+
 uvicorn app.main:app --reload
 ```
 
-Para usar PostgreSQL, copie o `.env.example` para `.env` e preencha a `DATABASE_URL` (o próprio `.env.example` mostra as opções: Neon, Docker ou Postgres instalado no PC). Sem isso, o sistema roda com SQLite.
+Documentação interativa da API disponível em `http://127.0.0.1:8000/docs`.
 
-Abra `http://127.0.0.1:8000` no navegador. Na primeira execução, o banco é criado e populado com os 174 produtos do catálogo inicial.
+---
 
-## Como o projeto começou
+## Projeto em evolução
 
-Comecei com um protótipo de um arquivo só, feito com ajuda de IA, para testar a ideia no uso real. Quando ficou claro que resolvia o problema, separei em camadas (dados, regra de negócio e interface) e troquei a persistência por um banco de verdade.
+Este sistema é meu laboratório de estudo. Cada disciplina que curso em Sistemas de Informação eu aplico aqui, sobre um problema real, em vez de resolver exercício isolado. Por isso ele cresce em camadas e não tem data de conclusão.
 
-Hoje eu cuido do back-end e do banco de dados.
+| Disciplina | O que virou prática no projeto |
+|---|---|
+| Modelagem de Negócios | Mapeamento do processo da encomenda, diagrama de fluxo e casos de uso, identificação de gargalo |
+| Banco de Dados | Modelagem relacional, integridade referencial entre recibo e itens, consultas com agregação e CTE |
+| Desenvolvimento Ágil | Backlog em `TAREFAS.md` organizado em ciclos, cada ciclo entregando uma fatia vertical (banco → API → tela), com limite de uma tarefa em andamento por vez e validação com o usuário final ao fim de cada ciclo |
+| Gestão de TI | Separação de configuração e credenciais (`.env` / `.env.example`), escolha de banco gerenciado em vez de infraestrutura própria, documentação da migração em `MIGRATION_GUIDE.md` |
+| Teste de Software | Script de validação da migração SQLite/Postgres em `test_database.py` |
 
 ## Próximos passos
 
-- Terminar a rota de capacidade e mostrar o resultado para a secretária antes de ela fechar a encomenda.
-- Concluir o piloto e adaptar o sistema para os outros setores.
-- Indicadores para a gerência: quanto tempo cada molde fica parado e onde a produção trava.
-- Autenticação simples e registro de quem fez cada alteração, quando mais pessoas passarem a usar.
-- Exportar o histórico em `.xlsx` ou PDF.
+- [ ] Automatizar o relatório mensal de moldes
+- [ ] Tratar valores monetários com `NUMERIC` em vez de ponto flutuante
+- [ ] Cobertura de testes nos endpoints principais
+- [ ] Containerizar com Docker
+
+---
+
+## Contexto
+
+Projeto construído enquanto curso Sistemas de Informação, aplicando no trabalho real o conteúdo de cada disciplina. A modelagem de processo deste repositório, por exemplo, nasceu da matéria de Modelagem de Negócios.
+
+[LinkedIn](https://www.linkedin.com/in/janisvaldo-junqueira-524072345/)
