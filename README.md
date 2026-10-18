@@ -1,20 +1,29 @@
 # Ficha de Produção — J J Marmorite
 
-Ferramenta interna que resolve um problema real de uma pequena empresa de artesanato em resina/pó de mármore: transformar um recibo de produção (só código, descrição, cor e quantidade) em valor a receber, sem precisar cruzar manualmente com uma tabela de preços separada.
+Sistema web que uso na fábrica onde trabalho, uma empresa de artesanato em resina e pó de mármore. Começou para resolver um problema meu, calcular quanto eu tinha a receber por lote produzido, e virou uma ferramenta para a fábrica saber se tem molde para atender cada encomenda.
+
+Trabalho na produção, no setor de peças pequenas. Construí o sistema porque sentia o problema todo dia.
 
 ## O problema
 
-Na J J Marmorite, depois que um lote de peças é produzido, outro setor lança as peças no sistema interno da empresa e entrega um **recibo** (planilha `.xlsx`) contendo apenas `código`, `descrição`, `cor` e `quantidade` — **sem nenhum valor**. Para saber quanto vai receber, quem produziu precisa abrir uma tabela de preços separada (~174 produtos), procurar cada código manualmente e multiplicar pela quantidade. É lento e sujeito a erro.
+**Falta informação entre os setores.** A fábrica tem mais de 250 modelos de molde e recebe encomendas de 400 a 500 peças, espalhadas em muitos modelos diferentes. Quando falta um molde ou um material, cada setor reclama, o processo trava e ninguém sabe onde resolver. A encomenda é aceita sem ninguém saber se existe molde para ela, e a decisão vira discussão, não número.
 
-## A solução
+**O cálculo do recibo era manual.** Depois de produzir um lote, recebo um recibo em `.xlsx` só com código, descrição, cor e quantidade, sem valor nenhum. Para saber quanto recebo, eu precisava procurar cada código numa tabela de preços separada e multiplicar à mão. Lento e fácil de errar.
 
-Um app web que:
+## O que o sistema faz
 
-- Lê o `.xlsx` do recibo (detectando automaticamente as colunas de código e quantidade, não importa a ordem ou o nome exato do cabeçalho) — ou aceita colar/digitar os itens à mão;
-- Cruza cada código com uma tabela de preços própria, calcula o subtotal por item e o total do recibo;
-- Sinaliza na hora qualquer código que não esteja cadastrado, com um atalho pra cadastrar o produto sem sair da tela;
-- Mantém um histórico dos recibos calculados, com resumo do mês e total acumulado;
-- Gera um texto de recibo pronto pra compartilhar (WhatsApp, e-mail etc.).
+- Lê o `.xlsx` do recibo e encontra sozinho as colunas de código e quantidade, mesmo que a ordem ou o nome do cabeçalho mudem. Também aceita digitar os itens à mão.
+- Cruza cada código com a tabela de preços e calcula o subtotal e o total do recibo.
+- Avisa na hora quando um código não está cadastrado, com atalho para cadastrar sem sair da tela.
+- Guarda o histórico dos recibos, com resumo do mês e total acumulado.
+- Gera um texto de recibo pronto para mandar no WhatsApp ou por e-mail.
+- **Capacidade por encomenda** (`/api/capacidade`): para cada peça da encomenda, calcula quantas peças os moldes disponíveis conseguem produzir por dia e quantos dias a peça vai levar. Mostra primeiro as peças mais demoradas, e separa as que estão sem molde disponível ou com molde ainda não cadastrado.
+
+## Situação atual
+
+O sistema roda no setor de peças pequenas, com a secretária e a gerência acompanhando. Estamos num piloto de 60 a 90 dias. Se der resultado, ele vai para os outros setores: peças médias e grandes ocas, moldes, embalagem e expedição.
+
+Levar para outros setores não é só copiar. Cada setor tem suas regras e condições, então o sistema vai precisar ser adaptado a cada um.
 
 ## Arquitetura
 
@@ -22,37 +31,50 @@ Um app web que:
 ficha-producao/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py        → FastAPI: rotas da API + serve o frontend estático
-│   │   ├── database.py    → conexão SQLite e criação do schema
-│   │   └── schemas.py     → validação de entrada/saída (Pydantic)
+│   │   ├── main.py        → FastAPI: rotas da API + serve o frontend
+│   │   ├── database.py    → conexão com o banco (SQLite ou PostgreSQL) e schema
+│   │   ├── schemas.py     → validação de entrada e saída (Pydantic)
+│   │   └── routers/       → rotas separadas por assunto
 │   ├── data/
-│   │   └── produtos_seed.json  → catálogo original (174 produtos), usado só
-│   │                              pra popular o banco na primeira execução
+│   │   └── produtos_seed.json  → catálogo inicial (174 produtos), usado só
+│   │                              para popular o banco na primeira execução
+│   ├── scripts/           → scripts de apoio (relatórios)
+│   ├── .env.example       → modelo de configuração, sem senha real
 │   └── requirements.txt
 ├── frontend/
 │   ├── index.html
 │   ├── css/style.css
-│   └── js/app.js          → UI + parsing de .xlsx (SheetJS) + chamadas à API
+│   └── js/app.js          → interface + leitura do .xlsx (SheetJS) + chamadas à API
 └── README.md
 ```
 
-**Backend:** Python + [FastAPI](https://fastapi.tiangolo.com/) + SQLite, com SQL escrito à mão (sem ORM) — pra um projeto desse tamanho, o SQL direto é mais transparente do que a abstração de um ORM, e conversa melhor com fundamentos de Engenharia de Dados.
+**Backend:** Python + [FastAPI](https://fastapi.tiangolo.com/), com SQL escrito à mão, sem ORM. Num projeto desse tamanho, o SQL direto deixa claro o que o banco está fazendo, e é justamente o que quero dominar, porque estou me formando para engenharia de dados.
 
-**Por que SQLite:** é um único arquivo, sem processo de servidor de banco separado — adequado pra uma ferramenta de uso individual. Ficou de fora do Git (fica de fora do versionamento; só o *schema* e o *seed* de dados são versionados — o banco em si é gerado na primeira vez que a API roda).
+**Frontend:** HTML, CSS e JavaScript puros, sem framework. O `.xlsx` é lido no navegador com [SheetJS](https://sheetjs.com/). Toda a regra de negócio (cruzar código com preço, calcular total, calcular capacidade) fica no backend.
 
-**Frontend:** HTML/CSS/JS puro, sem framework nem build step. O parsing do `.xlsx` roda no navegador via [SheetJS](https://sheetjs.com/); toda a lógica de negócio (cruzar código × preço, gerar total) vive no backend.
+**Um comando só:** o FastAPI serve o frontend direto (`StaticFiles`), então o projeto inteiro sobe com um único comando, sem dois processos e sem configurar CORS.
 
-**Uma decisão de design:** o backend serve o frontend estático diretamente (`StaticFiles` do FastAPI), então o projeto inteiro roda com **um único comando** — sem precisar de dois processos nem configurar CORS entre front e back.
+### Banco de dados: SQLite no desenvolvimento, PostgreSQL em produção
+
+O sistema escolhe o banco pela variável de ambiente `DATABASE_URL`. Se ela existir, conecta no PostgreSQL (via `psycopg2`). Se não existir, usa um SQLite local (`ficha.db`), criado automaticamente na primeira execução.
+
+Fiz assim porque no meu PC quero testar rápido, sem depender de servidor, e no piloto da fábrica preciso de um banco de verdade. Em produção, o PostgreSQL roda no [Neon](https://neon.tech), um Postgres gerenciado na nuvem. A troca entre os dois é só uma linha no `.env`, o código não muda. O schema é o mesmo nos dois, com pequenas adaptações (`SERIAL` no Postgres, `AUTOINCREMENT` no SQLite).
+
+O arquivo `ficha.db` e o `.env` ficam fora do Git. Só o schema e o catálogo inicial são versionados.
 
 ### Modelo de dados
 
 ```
 produtos       (codigo PK, nome, preco)
-recibos        (id PK, data, nota, total, qtd_total)
+recibos        (id PK, data, nota, encomenda, total, qtd_total)
 itens_recibo   (id PK, recibo_id FK → recibos, codigo, nome, quantidade, preco, subtotal, ok)
+molde          (produto_codigo, unidades_disponiveis, pecas_por_enchimento,
+                enchimentos_por_dia, cadastrado, ...)
 ```
 
-`itens_recibo` guarda uma **cópia** do nome e preço do produto no momento do cálculo (não uma referência viva à tabela `produtos`). Isso é proposital: se o preço de um produto mudar depois, os recibos antigos no histórico continuam mostrando o valor que foi efetivamente calculado naquela data — igual a uma nota fiscal, que não muda retroativamente se o preço da loja mudar amanhã.
+`itens_recibo` guarda uma **cópia** do nome e do preço no momento do cálculo, não uma referência à tabela `produtos`. É de propósito: se o preço mudar depois, os recibos antigos continuam mostrando o valor que foi calculado naquela data. Funciona como uma nota fiscal, que não muda se o preço da loja mudar amanhã.
+
+A capacidade de um molde por dia é `unidades_disponiveis × pecas_por_enchimento × enchimentos_por_dia`. Os dias necessários para uma peça são a quantidade pedida dividida por essa capacidade, arredondada para cima. Quando a capacidade dá zero (molde estragado ou sem unidade), a consulta usa `NULLIF` para não dividir por zero, e a peça aparece no fim da lista como pendência.
 
 ## Como rodar
 
@@ -66,15 +88,20 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Abra `http://127.0.0.1:8000` no navegador. Na primeira execução, o banco (`backend/ficha.db`) é criado automaticamente e populado com os 174 produtos do catálogo original.
+Para usar PostgreSQL, copie o `.env.example` para `.env` e preencha a `DATABASE_URL` (o próprio `.env.example` mostra as opções: Neon, Docker ou Postgres instalado no PC). Sem isso, o sistema roda com SQLite.
 
-## Origem do projeto
+Abra `http://127.0.0.1:8000` no navegador. Na primeira execução, o banco é criado e populado com os 174 produtos do catálogo inicial.
 
-Começou como um protótipo single-file (HTML/CSS/JS num arquivo só, com persistência via uma API exclusiva de ambiente de artifact) pra validar a ideia rapidamente com o uso real. Esta versão separa dados, lógica de negócio e interface em camadas, e troca a persistência por um banco de verdade — o próximo passo natural depois que o protótipo provou que resolvia o problema.
+## Como o projeto começou
 
-## Próximos passos possíveis
+Comecei com um protótipo de um arquivo só, feito com ajuda de IA, para testar a ideia no uso real. Quando ficou claro que resolvia o problema, separei em camadas (dados, regra de negócio e interface) e troquei a persistência por um banco de verdade.
 
-- Deploy num serviço como Render/Railway pra acesso de qualquer dispositivo.
-- Autenticação simples, caso mais de uma pessoa da produção passe a usar.
-- Automatizar a extração do recibo direto do sistema interno da empresa (se um dia houver uma exportação/API viável), eliminando o passo manual do `.xlsx`.
-- Exportar o histórico em `.xlsx`/PDF pra conferência externa.
+Hoje eu cuido do back-end e do banco de dados.
+
+## Próximos passos
+
+- Terminar a rota de capacidade e mostrar o resultado para a secretária antes de ela fechar a encomenda.
+- Concluir o piloto e adaptar o sistema para os outros setores.
+- Indicadores para a gerência: quanto tempo cada molde fica parado e onde a produção trava.
+- Autenticação simples e registro de quem fez cada alteração, quando mais pessoas passarem a usar.
+- Exportar o histórico em `.xlsx` ou PDF.

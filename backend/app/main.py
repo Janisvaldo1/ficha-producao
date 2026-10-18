@@ -448,12 +448,14 @@ def consulta_encomenda(encomenda: str, prazo_dias: int = 10):
            SUM(itens.quantidade) AS quantidade_total,
            molde.cadastrado,
            MAX(molde.unidades_disponiveis * molde.pecas_por_enchimento * molde.enchimentos_por_dia) AS capacidade_dia,
-           CEIL(CAST(SUM(itens.quantidade) AS numeric) /
-                NULLIF(MAX(molde.unidades_disponiveis * molde.pecas_por_enchimento * molde.enchimentos_por_dia), 0)) AS dias_necessarios
+           CEIL(CAST(SUM(itens.quantidade) AS numeric) / 
+                -- NULLIF evita a divisão por zero: quando a capacidade do molde dá 0
+                -- (molde estragado ou sem unidade), troca o 0 por NULL e a query não trava.
+                NULLIF(MAX(molde.unidades_disponiveis * molde.pecas_por_enchimento * molde.enchimentos_por_dia), 0)) AS dias_necessarios 
         FROM itens
         LEFT JOIN molde ON molde.produto_codigo = itens.codigo
         GROUP BY itens.codigo, itens.nome, molde.cadastrado
-        ORDER BY dias_necessarios DESC NULLS LAST """, (encomenda,)).fetchall()
+        ORDER BY dias_necessarios DESC NULLS LAST """, (encomenda,)).fetchall()        
     
     qtd_itens = len(consulta)
     total_pecas = 0
