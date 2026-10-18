@@ -173,6 +173,14 @@ Cada uma com o gatilho que a tira daqui.
 - [ ] **Custo do molde e ponto de equilíbrio.** Era o Ciclo 4; saiu porque é
       análise, não decisão operacional. Retomar depois da simulação.
 
+      - Enxugar o backend/requirements.txt: tem numpy, pandas e requests que o
+  servidor não importa. Todo deploy instala à toa. Sessão própria, com
+  deploy conferido depois — é mudança em produção.
+- Decidir se o SQLite ainda serve (ficha.db, o if/else do database.py).
+  Se não serve, é caminho morto.
+- Ver o que tem na pasta backend/ficha-producao — nome do projeto repetido
+  lá dentro, provável sobra de cópia.
+
 ---
 
 ## Trilha de aprendizado
@@ -325,4 +333,6 @@ Faz o desenho de trás pra frente; a execução sai de frente pra trás.
 
 Para problemas de **diagnosticar** (está lento, caiu, o número não bate) o
 procedimento é outro: parte do sintoma e vai estreitando.
+
+
 
