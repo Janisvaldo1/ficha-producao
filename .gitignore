@@ -58,3 +58,8 @@ desktop.ini
 node_modules/
 .next/
 dist/
+
+
+# Skills de agentes de IA (uso local)
+.agents/
+skills-lock.json

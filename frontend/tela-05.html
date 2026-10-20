@@ -6,61 +6,20 @@
 <title>05 - Capacidade — J J Marmorite</title>
 <link rel="stylesheet" href="css/style.css">
 <style>
-  .voltar{
-    display:inline-block; margin-bottom:10px;
-    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.04em;
-    color:var(--ink-soft); text-decoration:none;
-  }
-  .voltar:hover{color:var(--clay-dark);}
-
-  .filtros{display:flex; gap:12px; flex-wrap:wrap;}
+  /* Esta página usa o design system único em css/style.css (seletores com
+     prefixo .app). Aqui só ficam regras de layout que o CSS global não
+     cobre — nada de fonte, cor ou tamanho duplicado/antigo. */
+  .filtros{display:flex; flex-wrap:wrap;}
   .filtros .field{margin-bottom:0;}
   .filtros .f-encomenda{flex:1 1 220px;}
   .filtros .f-prazo{flex:0 0 120px;}
-  .filtros select, .filtros input[type=number]{
-    width:100%; font-size:16px; padding:9px 11px; border:1px solid var(--line); border-radius:6px;
-    background:var(--stone); font-family:'IBM Plex Sans', sans-serif; color:var(--ink);
-  }
+  .filtros select, .filtros input[type=number]{width:100%;}
 
-  /* Resposta em destaque */
-  .veredito{
-    border-radius:8px; padding:18px 20px; margin-bottom:16px;
-    border:2px solid; box-shadow:var(--shadow);
-  }
-  .veredito .v-eyebrow{
-    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em;
-    text-transform:uppercase; margin:0 0 4px; opacity:0.8;
-  }
-  .veredito .v-titulo{font-family:'Zilla Slab', serif; font-weight:700; font-size:28px; line-height:1.1; margin:0;}
-  .veredito .v-sub{font-size:13.5px; margin-top:6px;}
-  .veredito.sim{background:#EAF0E3; color:var(--sage-dark); border-color:var(--sage);}
-  .veredito.nao{background:#F6E4E1; color:#8C332A; border-color:var(--red);}
-  .veredito.ressalva{background:#F5EBD8; color:#7A5A1E; border-color:#C9A24E;}
-
-  /* Contagem X de Y — sempre visível */
-  .analisados{
-    display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
-    font-size:14px; margin-bottom:12px;
-  }
-  .analisados b{font-family:'IBM Plex Mono', monospace; font-size:18px;}
-
-  /* Aviso de resultado incompleto — propositalmente forte */
-  .aviso-incompleto{
-    background:#F6E4E1; color:#8C332A; border:2px solid var(--red); border-left-width:8px;
-    border-radius:8px; padding:14px 16px; margin-bottom:16px;
-    font-size:14px; line-height:1.45;
-  }
-  .aviso-incompleto .a-titulo{font-family:'Zilla Slab', serif; font-weight:700; font-size:18px; margin:0 0 4px;}
-
-  td.tnum, th.tnum{text-align:right; font-family:'IBM Plex Mono', monospace; white-space:nowrap;}
-  td.tdias{font-weight:600;}
-  td.tdias.estoura{color:var(--red);}
+  .veredito .v-titulo{margin:0;}
+  .veredito .v-eyebrow{letter-spacing:0.1em; text-transform:uppercase; opacity:0.8;}
 
   @media (max-width:520px){
-    .veredito .v-titulo{font-size:23px;}
     .filtros .f-prazo{flex:1 1 100%;}
-    table{font-size:12.5px;}
-    thead th, tbody td{padding:6px 5px;}
   }
 </style>
 </head>
