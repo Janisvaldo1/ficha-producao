@@ -432,7 +432,9 @@ def atualizar_molde(produto_codigo: str, req: schemas.AtualizarMoldeRequest):
         conn.close()
 
 @app.get("/api/capacidade", tags=["capacidade"])
-def consulta_encomenda(encomenda: str, prazo_dias: int = 10):
+def consulta_encomenda_simulacao(encomenda: str | None = None, simulacao_id: int | None = None, prazo_dias: int = 10):
+    if (encomenda is None) and (simulacao_id is None) or (encomenda is  not None) and (simulacao_id is not None):
+        raise HTTPException(status_code=400, detail="campo encomenda e simulacao_id ambos vazios ou cheios, apenas um pode está informado")
     conn = get_db()
     consulta = conn.execute("""
     WITH itens AS (
