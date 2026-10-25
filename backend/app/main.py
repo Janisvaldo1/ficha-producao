@@ -432,17 +432,29 @@ def atualizar_molde(produto_codigo: str, req: schemas.AtualizarMoldeRequest):
         conn.close()
 
 @app.get("/api/capacidade", tags=["capacidade"])
-def consulta_encomenda(encomenda: str, prazo_dias: int = 10):
+def consulta_encomenda_simulacao(encomenda: str | None = None, simulacao_id: int | None = None, prazo_dias: int = 10):
+    if (encomenda is None) and (simulacao_id is None) or (encomenda is  not None) and (simulacao_id is not None):
+        raise HTTPException(status_code=400, detail="campo encomenda e simulacao_id ambos vazios ou cheios, apenas um pode está informado")
     conn = get_db()
-    consulta = conn.execute("""
-    WITH itens AS (
-                SELECT i.codigo,
+    if encomenda is not None:
+        origem = """ SELECT i.codigo,
                 i.nome,
                 i.quantidade
             FROM itens_recibo i
             JOIN recibos r ON r.id = i.recibo_id
-            WHERE r.encomenda = ?
-        )
+            WHERE r.encomenda = ? """
+        valor = encomenda
+    else:
+        origem = """ SELECT si.codigo,
+                produtos.nome,
+                si.quantidade
+            FROM simulacao_item si
+            JOIN produtos ON produtos.codigo = si.codigo
+            WHERE si.simulacao_id = ? """
+        valor = simulacao_id
+
+    consulta = conn.execute(f"""
+    WITH itens AS ({origem})
         SELECT itens.codigo,
            itens.nome,
            SUM(itens.quantidade) AS quantidade_total,
@@ -455,7 +467,7 @@ def consulta_encomenda(encomenda: str, prazo_dias: int = 10):
         FROM itens
         LEFT JOIN molde ON molde.produto_codigo = itens.codigo
         GROUP BY itens.codigo, itens.nome, molde.cadastrado
-        ORDER BY dias_necessarios DESC NULLS LAST """, (encomenda,)).fetchall()        
+        ORDER BY dias_necessarios DESC NULLS LAST """, (valor,)).fetchall()        
     
     qtd_itens = len(consulta)
     total_pecas = 0
