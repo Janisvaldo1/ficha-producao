@@ -48,8 +48,13 @@
 
   <div class="card">
     <div class="filtros">
+      <div class="field f-modo">
+        <label class="field-label">Modo</label>
+        <label><input type="radio" name="modo" value="encomenda" checked> Encomenda</label>
+        <label><input type="radio" name="modo" value="simulacao"> Simulação</label>
+      </div>
       <div class="field f-encomenda">
-        <label class="field-label" for="sel-encomenda">Encomenda</label>
+        <label class="field-label" for="sel-encomenda" id="rotulo-sel">Encomenda</label>
         <select id="sel-encomenda" disabled>
           <option value="">carregando...</option>
         </select>
@@ -79,6 +84,17 @@ function fmtNum(n){
   return Number(n).toLocaleString('pt-BR');
 }
 
+// Qual radio de modo esta marcado: 'encomenda' ou 'simulacao'
+function modoAtual(){
+  return document.querySelector('input[name="modo"]:checked').value;
+}
+
+// Data vem do banco em formato cru (2026-10-11T20:14:32-03:00) -> 11/10
+function fmtData(iso){
+  if(!iso) return '';
+  return new Date(iso).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+}
+
 async function getJson(url){
   const res = await fetch(url);
   if(!res.ok){
@@ -89,23 +105,46 @@ async function getJson(url){
   return res.json();
 }
 
-// ---------- lista de encomendas ----------
-async function carregarEncomendas(){
-  const sel = $('#sel-encomenda');
+// ---------- lista do seletor: encomendas ou simulacoes ----------
+async function carregarLista(){
+  const sel  = $('#sel-encomenda');
+  const modo = modoAtual();
+  const ehEncomenda = modo === 'encomenda';
+
+  // O rotulo acompanha o modo
+  $('#rotulo-sel').textContent = ehEncomenda ? 'Encomenda' : 'Simulação';
+
+  // Volta ao estado de carregando a cada troca de modo
+  sel.disabled = true;
+  sel.innerHTML = '<option value="">carregando...</option>';
+  $('#lista-alert').innerHTML = '';
+
   try{
-    const lista = await getJson('/api/encomendas');
+    const lista = await getJson(ehEncomenda ? '/api/encomendas' : '/api/simulacoes');
+
     if(!lista.length){
-      sel.innerHTML = '<option value="">nenhuma encomenda</option>';
+      sel.innerHTML = '<option value="">'+(ehEncomenda ? 'nenhuma encomenda' : 'nenhuma simulação')+'</option>';
       return;
     }
-    sel.innerHTML = '<option value="">Escolha uma encomenda...</option>'
-      + lista.map(e => '<option value="'+escapeHtml(e.encomenda)+'">'
-          + escapeHtml(e.encomenda)+' — '+fmtNum(e.total_pecas)+' peças, '
-          + fmtNum(e.produtos_diferentes)+' produtos</option>').join('');
+
+    if(ehEncomenda){
+      sel.innerHTML = '<option value="">Escolha uma encomenda...</option>'
+        + lista.map(e => '<option value="'+escapeHtml(e.encomenda)+'">'
+            + escapeHtml(e.encomenda)+' — '+fmtNum(e.total_pecas)+' peças, '
+            + fmtNum(e.produtos_diferentes)+' produtos</option>').join('');
+    }else{
+      // Aqui o valor e o texto sao coisas diferentes:
+      // value = id (vai na URL), texto = o que a pessoa le
+      sel.innerHTML = '<option value="">Escolha uma simulação...</option>'
+        + lista.map(s => '<option value="'+escapeHtml(s.id)+'">'
+            + escapeHtml(fmtData(s.data))+' — '+fmtNum(s.total_pecas)+' peças'
+            + (s.observacao ? ' — '+escapeHtml(s.observacao) : '')
+            + '</option>').join('');
+    }
     sel.disabled = false;
   }catch(e){
     sel.innerHTML = '<option value="">indisponível</option>';
-    $('#lista-alert').innerHTML = '<div class="alert alert-error">⚠ Não consegui carregar a lista de encomendas. '+escapeHtml(e.message)+'</div>';
+    $('#lista-alert').innerHTML = '<div class="alert alert-error">⚠ Não consegui carregar a lista. '+escapeHtml(e.message)+'</div>';
   }
 }
 
@@ -113,9 +152,9 @@ async function carregarEncomendas(){
 let consultaAtual = 0;
 
 async function consultar(){
-  const encomenda = $('#sel-encomenda').value;
+  const escolhido = $('#sel-encomenda').value;
   const area = $('#resultado');
-  if(!encomenda){ area.innerHTML = ''; return; }
+  if(!escolhido){ area.innerHTML = ''; return; }
 
   const prazo = parseInt($('#prazo').value, 10);
   if(!(prazo > 0)){
@@ -126,7 +165,11 @@ async function consultar(){
   const minha = ++consultaAtual;
   area.innerHTML = '<div class="card"><div class="empty"><span class="spinner"></span> consultando capacidade...</div></div>';
   try{
-    const url = '/api/capacidade?encomenda='+encodeURIComponent(encomenda)+'&prazo_dias='+prazo;
+    // Mesma rota, parametro diferente conforme a origem
+    const param = modoAtual() === 'encomenda'
+      ? 'encomenda='+encodeURIComponent(escolhido)
+      : 'simulacao_id='+encodeURIComponent(escolhido);
+    const url = '/api/capacidade?'+param+'&prazo_dias='+prazo;
     const dados = await getJson(url);
     if(minha !== consultaAtual) return; // chegou resposta de uma consulta antiga
     area.innerHTML = renderResultado(dados);
@@ -140,6 +183,13 @@ function tabelaItens(lista){
   return '<div class="table-scroll"><table><thead><tr><th style="width:70px;">Código</th><th>Produto</th></tr></thead><tbody>'
     + lista.map(i => '<tr><td class="tcode">'+escapeHtml(i.codigo)+'</td><td>'+escapeHtml(i.nome)+'</td></tr>').join('')
     + '</tbody></table></div>';
+}
+
+// A resposta da API nao diz de qual simulacao ela fala — so traz encomenda,
+// que vem nula nesse caso. Por isso o titulo usa o que a tela escolheu.
+function tituloOrigem(d){
+  if(d.encomenda != null && d.encomenda !== '') return 'Encomenda '+d.encomenda;
+  return 'Simulação '+$('#sel-encomenda').value;
 }
 
 function renderResultado(d){
@@ -176,7 +226,7 @@ function renderResultado(d){
   }
 
   let html = '<div class="veredito '+vClasse+'">'
-    + '<p class="v-eyebrow">Encomenda '+escapeHtml(d.encomenda)+' · prazo '+fmtNum(d.prazo_dias)+' dias</p>'
+    + '<p class="v-eyebrow">'+escapeHtml(tituloOrigem(d))+' · prazo '+fmtNum(d.prazo_dias)+' dias</p>'
     + '<p class="v-titulo">'+escapeHtml(vTitulo)+'</p>'
     + '<div class="v-sub">'+escapeHtml(vSub)+'</div>'
     + '</div>';
@@ -250,7 +300,15 @@ function renderResultado(d){
 $('#sel-encomenda').addEventListener('change', consultar);
 $('#prazo').addEventListener('change', consultar);
 
-carregarEncomendas();
+// Trocar de modo limpa o resultado antigo e recarrega o seletor
+document.querySelectorAll('input[name="modo"]').forEach(function(radio){
+  radio.addEventListener('change', function(){
+    $('#resultado').innerHTML = '';
+    carregarLista();
+  });
+});
+
+carregarLista();
 </script>
 </body>
 </html>

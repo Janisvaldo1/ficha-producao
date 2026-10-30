@@ -178,49 +178,56 @@
         }
 
         /**
-         * Salva o molde na API com PUT
-         */
-        async function salvarMolde(event) {
-            event.preventDefault();
+ * Salva o molde na API com PUT
+ */
+async function salvarMolde(event) {
+    event.preventDefault();
 
-            if (!moldeAtual) return;
+    if (!moldeAtual) return;
+    const molde = moldeAtual;   // ← ADICIONA esta linha (snapshot)
 
-            try {
-                const dados = {
-                    unidades_disponiveis: parseInt(document.getElementById('unidades').value),
-                    pecas_por_enchimento: parseInt(document.getElementById('pecas').value),
-                    enchimentos_por_dia: parseInt(document.getElementById('enchimentos').value)
-                };
-
-                const response = await fetch(`/api/moldes/${moldeAtual.produto_codigo}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dados)
-                });
-
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        throw new Error('Molde não encontrado');
-                    }
-                    throw new Error('Erro ao salvar molde');
-                }
-
-                const moldeAtualizado = await response.json();
-
-                // Atualiza na lista local
-                const moldeIndex = moldeLista.findIndex(m => m.produto_codigo === moldeAtual.produto_codigo);
-                if (moldeIndex !== -1) {
-                    moldeLista[moldeIndex] = moldeAtualizado;
-                }
-
-                fecharFormulario();
-                renderizarLista();
-            } catch (erro) {
-                console.error(erro);
-                alert('Erro ao salvar: ' + erro.message);
-            }
+    try {
+        // (1) Garante a senha ANTES de qualquer requisição
+        let senha = sessionStorage.getItem('senha_moldes');
+        if (!senha) {
+            senha = prompt('Senha do setor:');
+            if (!senha) return;
+            sessionStorage.setItem('senha_moldes', senha);
         }
 
+        const dados = {
+            unidades_disponiveis: parseInt(document.getElementById('unidades').value),
+            pecas_por_enchimento: parseInt(document.getElementById('pecas').value),
+            enchimentos_por_dia: parseInt(document.getElementById('enchimentos').value)
+        };
+
+        const response = await fetch(`/api/moldes/${molde.produto_codigo}`, {   // ← TROCA moldeAtual por molde
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Senha': senha
+            },
+            body: JSON.stringify(dados)
+        });
+
+        // ... (resto do if de erros fica igual)
+
+        const moldeAtualizado = await response.json();
+
+        const moldeIndex = moldeLista.findIndex(
+            m => m.produto_codigo === molde.produto_codigo    // ← TROCA moldeAtual por molde
+        );
+        if (moldeIndex !== -1) {
+            moldeLista[moldeIndex] = moldeAtualizado;
+        }
+
+            fecharFormulario();
+            renderizarLista();
+        } catch (erro) {
+            console.error(erro);
+            alert('Erro ao salvar: ' + erro.message);
+        }
+    }
         // ===== EVENT LISTENERS =====
         inputBusca.addEventListener('input', (e) => {
             const termo = e.target.value.trim();

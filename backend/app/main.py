@@ -8,8 +8,10 @@ processos separados nem lidar com CORS entre front e back.
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
+import os
 
-from fastapi import FastAPI, HTTPException
+from typing import Annotated
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.staticfiles import StaticFiles
 from app.routers import simulacoes
 
@@ -407,8 +409,14 @@ def listar_moldes(busca: str = None):            # 2. a função e o filtro opci
     return linhas
 
 @app.put("/api/moldes/{produto_codigo}", tags=["moldes"])
-def atualizar_molde(produto_codigo: str, req: schemas.AtualizarMoldeRequest):
+def atualizar_molde(produto_codigo: str, req: schemas.AtualizarMoldeRequest, x_senha: Annotated[str | None, Header()] = None):
     """Atualiza os dados de um molde. Marca como cadastrado."""
+    # Pegar a senha do cabeçalho, ler a senha certa do .env com os.getenv e, se forem  diferentes, levantar HTTPException com 401 e uma mensagem.
+    
+    correct_password = os.getenv("SENHA_MOLDES")
+    if x_senha != correct_password:
+        raise HTTPException(401, f"Senha incorreta.")
+    
     conn = get_db()
     try:
         existe = conn.execute(
@@ -491,6 +499,7 @@ def consulta_encomenda_simulacao(encomenda: str | None = None, simulacao_id: int
     cabe_no_prazo = None if itens_analisados == 0 else pior_caso <= prazo_dias
     return {
     "encomenda": encomenda,
+    "simulacao_id": simulacao_id,
     "prazo_dias": prazo_dias,
     "total_pecas": total_pecas,
     "pior_caso_dias": pior_caso,
