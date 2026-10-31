@@ -322,14 +322,12 @@ async function salvarRecibo(){
       id: salvo.id, data: salvo.data, nota: salvo.nota, encomenda: salvo.encomenda,
       itens: salvo.itens, total: salvo.total, qtdTotal: salvo.qtd_total,
     });
-    // `innerHTML +=` reconstrói os nós filhos, então o botão precisa ser
-    // consultado de novo depois disso — a referência antiga fica órfã.
-    area.innerHTML += '<div class="alert alert-ok" style="margin-top:10px;">✓ Recibo salvo. Ele já aparece na tela "Recibos salvos".</div>';
+    area.insertAdjacentHTML('beforeend', '<div class="alert alert-ok" style="margin-top:10px;">✓ Recibo salvo. Ele já aparece na tela "Recibos salvos".</div>');
     atualizarSugestoesEncomenda();
     const btnDepois = $('#btn-salvar-recibo');
     if(btnDepois){ btnDepois.disabled = true; btnDepois.textContent = 'Salvo ✓'; }
   }catch(e){
-    area.innerHTML += '<div class="alert alert-error" style="margin-top:10px;">⚠ '+escapeHtml(e.message)+'</div>';
+    area.insertAdjacentHTML('beforeend', '<div class="alert alert-error" style="margin-top:10px;">⚠ '+escapeHtml(e.message)+'</div>');
     const btnDepois = $('#btn-salvar-recibo');
     if(btnDepois){ btnDepois.disabled = false; btnDepois.textContent = 'Salvar no histórico'; }
   }
