@@ -3,66 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>05 - Capacidade — J J Marmorite</title>
+<title>Cabe no prazo? — J J Marmorite</title>
 <link rel="stylesheet" href="css/style.css">
-<style>
-  /* Esta página usa o design system único em css/style.css (seletores com
-     prefixo .app). Aqui só ficam regras de layout que o CSS global não
-     cobre — nada de fonte, cor ou tamanho duplicado/antigo. */
-  .filtros{display:flex; flex-wrap:wrap;}
-  .filtros .field{margin-bottom:0;}
-  .filtros .f-encomenda{flex:1 1 220px;}
-  .filtros .f-prazo{flex:0 0 120px;}
-  .filtros select, .filtros input[type=number]{width:100%;}
-
-  .veredito .v-titulo{margin:0;}
-  .veredito .v-eyebrow{letter-spacing:0.1em; text-transform:uppercase; opacity:0.8;}
-
-  @media (max-width:520px){
-    .filtros .f-prazo{flex:1 1 100%;}
-  }
-</style>
 </head>
 <body>
 <nav class="sidebar" aria-label="Menu principal">
-  <div class="sidebar-brand">
-    <p class="sidebar-name">J J Marmorite</p>
-    <p class="sidebar-sub">Ficha de Produção</p>
+  <div class="sidebar-top">
+    <div class="sidebar-brand">
+      <p class="sidebar-name">J J Marmorite</p>
+      <p class="sidebar-sub">Ficha de produção</p>
+    </div>
+    <button type="button" class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="menu-links">Menu</button>
   </div>
-  <a class="side-link" href="/"><span class="num">01</span><span class="side-text"><span class="side-label">Calcular</span><span class="side-desc">Novo recibo e valor a receber</span></span></a>
-  <a class="side-link" href="/#produtos"><span class="num">02</span><span class="side-text"><span class="side-label">Tabela de preços</span><span class="side-desc">Códigos, produtos e preços</span></span></a>
-  <a class="side-link" href="/#historico"><span class="num">03</span><span class="side-text"><span class="side-label">Histórico</span><span class="side-desc">Recibos salvos por encomenda</span></span></a>
-  <a class="side-link" href="/tela-04.html"><span class="num">04</span><span class="side-text"><span class="side-label">Moldes</span><span class="side-desc">Cadastro dos moldes</span></span></a>
-  <a class="side-link active" href="/tela-05.html" aria-current="page"><span class="num">05</span><span class="side-text"><span class="side-label">Capacidade</span><span class="side-desc">A encomenda cabe no prazo?</span></span></a>
+  <div class="menu-links" id="menu-links">
+    <a class="side-link" href="/"><span class="side-label">Lançar recibo</span><span class="side-desc">Calcular o valor a receber</span></a>
+    <a class="side-link" href="/#produtos"><span class="side-label">Tabela de preços</span><span class="side-desc">Códigos, produtos e preços</span></a>
+    <a class="side-link" href="/#historico"><span class="side-label">Recibos salvos</span><span class="side-desc">Consultar por encomenda</span></a>
+    <a class="side-link" href="/tela-04.html"><span class="side-label">Moldes da fábrica</span><span class="side-desc">Conferir quantos moldes existem</span></a>
+    <a class="side-link active" href="/tela-05.html" aria-current="page"><span class="side-label">Cabe no prazo?</span><span class="side-desc">Consultar encomenda ou simulação</span></a>
+  </div>
 </nav>
 
 <div class="app">
 
-  <div class="header">
-    <div>
-      <p class="brand-eyebrow">05 · Capacidade</p>
-      <h1 class="brand-title">Cabe no prazo?</h1>
-      <p class="brand-sub">Confere se a encomenda sai no prazo com os moldes cadastrados.</p>
-    </div>
+  <div class="page-head">
+    <h1>Cabe no prazo?</h1>
+    <p>Escolha a encomenda ou a simulação e informe o prazo. O sistema calcula com os moldes cadastrados.</p>
   </div>
 
   <div class="card">
     <div class="filtros">
-      <div class="field f-modo">
-        <label class="field-label">Modo</label>
-        <label><input type="radio" name="modo" value="encomenda" checked> Encomenda</label>
-        <label><input type="radio" name="modo" value="simulacao"> Simulação</label>
-      </div>
+      <fieldset class="f-modo">
+        <legend>O que você quer consultar?</legend>
+        <div class="modo-opcoes">
+          <label class="modo-opcao"><input type="radio" name="modo" value="encomenda" checked> Encomenda já lançada</label>
+          <label class="modo-opcao"><input type="radio" name="modo" value="simulacao"> Simulação salva</label>
+        </div>
+      </fieldset>
       <div class="field f-encomenda">
         <label class="field-label" for="sel-encomenda" id="rotulo-sel">Encomenda</label>
         <select id="sel-encomenda" disabled>
-          <option value="">carregando...</option>
+          <option value="">Carregando...</option>
         </select>
       </div>
       <div class="field f-prazo">
         <label class="field-label" for="prazo">Prazo (dias)</label>
         <input type="number" id="prazo" value="14" min="1" step="1" inputmode="numeric">
       </div>
+      <button type="button" class="btn btn-primary" id="btn-verificar">Verificar prazo</button>
     </div>
     <div id="lista-alert"></div>
   </div>
@@ -71,6 +59,7 @@
 
 </div>
 
+<script src="js/menu.js"></script>
 <script>
 const $ = (s)=>document.querySelector(s);
 
@@ -116,14 +105,17 @@ async function carregarLista(){
 
   // Volta ao estado de carregando a cada troca de modo
   sel.disabled = true;
-  sel.innerHTML = '<option value="">carregando...</option>';
+  sel.innerHTML = '<option value="">Carregando...</option>';
   $('#lista-alert').innerHTML = '';
 
   try{
     const lista = await getJson(ehEncomenda ? '/api/encomendas' : '/api/simulacoes');
 
     if(!lista.length){
-      sel.innerHTML = '<option value="">'+(ehEncomenda ? 'nenhuma encomenda' : 'nenhuma simulação')+'</option>';
+      sel.innerHTML = '<option value="">'+(ehEncomenda ? 'Nenhuma encomenda' : 'Nenhuma simulação')+'</option>';
+      $('#lista-alert').innerHTML = '<div class="alert alert-warn">⚠ '+(ehEncomenda
+        ? 'Ainda não há encomenda lançada. Lance um recibo com o nome da encomenda para ela aparecer aqui.'
+        : 'Ainda não há simulação salva. A tela para criar simulações ainda não está disponível.')+'</div>';
       return;
     }
 
@@ -143,7 +135,7 @@ async function carregarLista(){
     }
     sel.disabled = false;
   }catch(e){
-    sel.innerHTML = '<option value="">indisponível</option>';
+    sel.innerHTML = '<option value="">Lista indisponível</option>';
     $('#lista-alert').innerHTML = '<div class="alert alert-error">⚠ Não consegui carregar a lista. '+escapeHtml(e.message)+'</div>';
   }
 }
@@ -163,7 +155,7 @@ async function consultar(){
   }
 
   const minha = ++consultaAtual;
-  area.innerHTML = '<div class="card"><div class="empty"><span class="spinner"></span> consultando capacidade...</div></div>';
+  area.innerHTML = '<div class="card"><div class="empty"><span class="spinner"></span> Consultando o prazo...</div></div>';
   try{
     // Mesma rota, parametro diferente conforme a origem
     const param = modoAtual() === 'encomenda'
@@ -175,13 +167,13 @@ async function consultar(){
     area.innerHTML = renderResultado(dados);
   }catch(e){
     if(minha !== consultaAtual) return;
-    area.innerHTML = '<div class="alert alert-error">⚠ Não consegui consultar a capacidade. '+escapeHtml(e.message)+'</div>';
+    area.innerHTML = '<div class="alert alert-error">⚠ Não consegui consultar o prazo. '+escapeHtml(e.message)+'</div>';
   }
 }
 
 function tabelaItens(lista){
-  return '<div class="table-scroll"><table><thead><tr><th style="width:70px;">Código</th><th>Produto</th></tr></thead><tbody>'
-    + lista.map(i => '<tr><td class="tcode">'+escapeHtml(i.codigo)+'</td><td>'+escapeHtml(i.nome)+'</td></tr>').join('')
+  return '<div class="table-scroll"><table><thead><tr><th>Código</th><th>Produto</th><th class="tnum">Qtd. pedida</th></tr></thead><tbody>'
+    + lista.map(i => '<tr><td class="tcode">'+escapeHtml(i.codigo)+'</td><td>'+escapeHtml(i.nome)+'</td><td class="tnum">'+fmtNum(i.quantidade_total)+'</td></tr>').join('')
     + '</tbody></table></div>';
 }
 
@@ -189,7 +181,8 @@ function tabelaItens(lista){
 // que vem nula nesse caso. Por isso o titulo usa o que a tela escolheu.
 function tituloOrigem(d){
   if(d.encomenda != null && d.encomenda !== '') return 'Encomenda '+d.encomenda;
-  return 'Simulação '+$('#sel-encomenda').value;
+  const opcao = $('#sel-encomenda').selectedOptions[0];
+  return 'Simulação '+(opcao ? opcao.textContent : $('#sel-encomenda').value);
 }
 
 function renderResultado(d){
@@ -209,29 +202,38 @@ function renderResultado(d){
   let vClasse, vTitulo, vSub;
   if(d.itens_analisados === 0){
     vClasse = 'ressalva';
-    vTitulo = 'Não dá pra responder';
+    vTitulo = 'Não dá para responder';
     vSub = 'Nenhum item desta encomenda pôde ser analisado. Ou o molde está em falta, ou ainda não foi conferido.';
   }else if(!d.cabe_no_prazo){
     vClasse = 'nao';
     vTitulo = 'Não cabe no prazo';
-    vSub = 'O pior caso leva '+fmtNum(d.pior_caso_dias)+' dias — o prazo é de '+fmtNum(d.prazo_dias)+'.';
+    vSub = 'O item mais demorado leva '+fmtNum(d.pior_caso_dias)+' dias, e o prazo é de '+fmtNum(d.prazo_dias)+'.';
   }else if(incompleto){
     vClasse = 'ressalva';
     vTitulo = 'Cabe no prazo — resultado incompleto';
-    vSub = 'Os itens analisados cabem em '+fmtNum(d.pior_caso_dias)+' de '+fmtNum(d.prazo_dias)+' dias, mas alguns itens ficaram fora da conta. Veja abaixo.';
+    vSub = 'Os itens da conta levam até '+fmtNum(d.pior_caso_dias)+' dias, dentro do prazo de '+fmtNum(d.prazo_dias)+'. Alguns itens ficaram fora da conta. Veja abaixo.';
   }else{
     vClasse = 'sim';
     vTitulo = 'Cabe no prazo';
-    vSub = 'O pior caso leva '+fmtNum(d.pior_caso_dias)+' de '+fmtNum(d.prazo_dias)+' dias.';
+    vSub = 'O item mais demorado leva '+fmtNum(d.pior_caso_dias)+' dias, dentro do prazo de '+fmtNum(d.prazo_dias)+'.';
   }
 
-  let html = '<div class="veredito '+vClasse+'">'
-    + '<p class="v-eyebrow">'+escapeHtml(tituloOrigem(d))+' · prazo '+fmtNum(d.prazo_dias)+' dias</p>'
+  const origem = tituloOrigem(d)+', prazo de '+fmtNum(d.prazo_dias)+' dias';
+
+  let html = '<div class="so-impressao imp-cabecalho">'
+    + '<p class="imp-empresa">J J Marmorite</p>'
+    + '<h1 class="imp-titulo imp-titulo-resultado">Consulta de prazo</h1>'
+    + '<h1 class="imp-titulo imp-titulo-falta">Moldes em falta</h1>'
+    + '<p class="imp-dados">'+escapeHtml(origem)+'. Impresso em '+escapeHtml(new Date().toLocaleDateString('pt-BR'))+'.</p>'
+    + '</div>';
+
+  html += '<div class="veredito '+vClasse+'">'
+    + '<p class="v-eyebrow">'+escapeHtml(origem)+'</p>'
     + '<p class="v-titulo">'+escapeHtml(vTitulo)+'</p>'
     + '<div class="v-sub">'+escapeHtml(vSub)+'</div>'
     + '</div>';
 
-  html += '<div class="analisados"><b>'+fmtNum(d.itens_analisados)+' de '+fmtNum(d.itens_total)+'</b> itens analisados</div>';
+  html += '<div class="analisados"><b>'+fmtNum(d.itens_analisados)+' de '+fmtNum(d.itens_total)+'</b> itens entraram na conta.</div>';
 
   if(nEmFalta + nNaoConferidos > 0){
     let texto = '';
@@ -241,7 +243,7 @@ function renderResultado(d){
     }
     if(nNaoConferidos > 0){
       texto += fmtNum(nNaoConferidos)+' '+(nNaoConferidos === 1 ? 'item ainda não teve' : 'itens ainda não tiveram')+' o molde conferido. '
-        + 'Confira na tela 04. ';
+        + 'Confira na tela "Moldes da fábrica". ';
     }
     texto += 'O prazo real pode ser maior que o mostrado aqui.';
     html += '<div class="aviso-incompleto" role="alert">'
@@ -251,7 +253,7 @@ function renderResultado(d){
   }
 
   html += '<div class="summary-strip">'
-    + '<div class="summary-box"><div class="slabel">Pior caso</div><div class="sval">'+fmtNum(d.pior_caso_dias)+' dias</div></div>'
+    + '<div class="summary-box"><div class="slabel">Item mais demorado</div><div class="sval">'+fmtNum(d.pior_caso_dias)+' dias</div></div>'
     + '<div class="summary-box"><div class="slabel">Total de peças</div><div class="sval">'+fmtNum(d.total_pecas)+'</div></div>'
     + '<div class="summary-box"><div class="slabel">Total de itens</div><div class="sval">'+fmtNum(d.itens_total)+'</div></div>'
     + '</div>';
@@ -260,8 +262,8 @@ function renderResultado(d){
   html += '<div class="card"><h2>Itens com molde</h2>'
     + '<p class="hint">Do que leva mais dias para o que leva menos.</p>';
   if(comMolde.length){
-    html += '<div class="table-scroll"><table><thead><tr>'
-      + '<th>Produto</th><th class="tnum">Qtd.</th><th class="tnum">Cap./dia</th><th class="tnum">Dias</th>'
+    html += '<div class="table-scroll"><table class="tabela-prazo"><thead><tr>'
+      + '<th>Produto</th><th class="tnum">Qtd.</th><th class="tnum">Peças por dia</th><th class="tnum">Dias</th><th>Situação</th>'
       + '</tr></thead><tbody>'
       + comMolde.map(i => {
           const estoura = Number(i.dias_necessarios) > d.prazo_dias;
@@ -270,6 +272,7 @@ function renderResultado(d){
             + '<td class="tnum">'+fmtNum(i.quantidade_total)+'</td>'
             + '<td class="tnum">'+fmtNum(i.capacidade_dia)+'</td>'
             + '<td class="tnum tdias'+(estoura ? ' estoura' : '')+'">'+fmtNum(i.dias_necessarios)+'</td>'
+            + '<td>'+(estoura ? '<span class="selo selo-erro">Estoura o prazo</span>' : '<span class="selo selo-ok">Cabe no prazo</span>')+'</td>'
             + '</tr>';
         }).join('')
       + '</tbody></table></div>';
@@ -280,22 +283,44 @@ function renderResultado(d){
 
   // Moldes em falta: conferidos, mas sem unidade disponível
   if(emFalta.length){
-    html += '<div class="card"><h2>Moldes em falta</h2>'
-      + '<p class="hint">Estes itens não têm molde disponível — é preciso o setor de moldes fornecer.</p>'
+    html += '<div class="card" id="bloco-falta"><div class="card-titulo"><h2>Moldes em falta</h2><span class="selo selo-erro">Em falta</span></div>'
+      + '<p class="hint">Estes itens não têm molde disponível. O setor de moldes precisa fornecer.</p>'
       + tabelaItens(emFalta)
       + '</div>';
   }
 
   // Moldes não conferidos: ninguém contou as unidades ainda
   if(naoConferidos.length){
-    html += '<div class="card"><h2>Moldes não conferidos</h2>'
+    html += '<div class="card"><div class="card-titulo"><h2>Moldes não conferidos</h2><span class="selo selo-aviso">Não conferido</span></div>'
       + '<p class="hint">Ninguém conferiu quantas unidades destes moldes existem.</p>'
       + tabelaItens(naoConferidos)
       + '</div>';
   }
 
+  html += '<div class="row-actions">'
+    + '<button type="button" class="btn btn-ghost" id="btn-imprimir-resultado">Imprimir resultado</button>'
+    + (emFalta.length ? '<button type="button" class="btn btn-ghost" id="btn-imprimir-falta">Imprimir moldes em falta</button>' : '')
+    + '</div>';
+
   return html;
 }
+
+$('#btn-verificar').addEventListener('click', function(){
+  if(!$('#sel-encomenda').value){
+    $('#resultado').innerHTML = '<div class="alert alert-warn">⚠ Escolha '+(modoAtual() === 'encomenda' ? 'uma encomenda' : 'uma simulação')+' na lista.</div>';
+    return;
+  }
+  consultar();
+});
+
+$('#resultado').addEventListener('click', function(e){
+  if(e.target.id === 'btn-imprimir-resultado') window.print();
+  if(e.target.id === 'btn-imprimir-falta'){
+    document.body.classList.add('imprimir-falta');
+    window.addEventListener('afterprint', function(){ document.body.classList.remove('imprimir-falta'); }, {once:true});
+    window.print();
+  }
+});
 
 $('#sel-encomenda').addEventListener('change', consultar);
 $('#prazo').addEventListener('change', consultar);

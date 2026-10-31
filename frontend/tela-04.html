@@ -3,37 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>04 - Cadastro de Moldes</title>
+    <title>Moldes da fábrica — J J Marmorite</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav class="sidebar" aria-label="Menu principal">
-        <div class="sidebar-brand">
-            <p class="sidebar-name">J J Marmorite</p>
-            <p class="sidebar-sub">Ficha de Produção</p>
-        </div>
-        <a class="side-link" href="/"><span class="num">01</span><span class="side-text"><span class="side-label">Calcular</span><span class="side-desc">Novo recibo e valor a receber</span></span></a>
-        <a class="side-link" href="/#produtos"><span class="num">02</span><span class="side-text"><span class="side-label">Tabela de preços</span><span class="side-desc">Códigos, produtos e preços</span></span></a>
-        <a class="side-link" href="/#historico"><span class="num">03</span><span class="side-text"><span class="side-label">Histórico</span><span class="side-desc">Recibos salvos por encomenda</span></span></a>
-        <a class="side-link active" href="/tela-04.html" aria-current="page"><span class="num">04</span><span class="side-text"><span class="side-label">Moldes</span><span class="side-desc">Cadastro dos moldes</span></span></a>
-        <a class="side-link" href="/tela-05.html"><span class="num">05</span><span class="side-text"><span class="side-label">Capacidade</span><span class="side-desc">A encomenda cabe no prazo?</span></span></a>
-    </nav>
+<nav class="sidebar" aria-label="Menu principal">
+  <div class="sidebar-top">
+    <div class="sidebar-brand">
+      <p class="sidebar-name">J J Marmorite</p>
+      <p class="sidebar-sub">Ficha de produção</p>
+    </div>
+    <button type="button" class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="menu-links">Menu</button>
+  </div>
+  <div class="menu-links" id="menu-links">
+    <a class="side-link" href="/"><span class="side-label">Lançar recibo</span><span class="side-desc">Calcular o valor a receber</span></a>
+    <a class="side-link" href="/#produtos"><span class="side-label">Tabela de preços</span><span class="side-desc">Códigos, produtos e preços</span></a>
+    <a class="side-link" href="/#historico"><span class="side-label">Recibos salvos</span><span class="side-desc">Consultar por encomenda</span></a>
+    <a class="side-link active" href="/tela-04.html" aria-current="page"><span class="side-label">Moldes da fábrica</span><span class="side-desc">Conferir quantos moldes existem</span></a>
+    <a class="side-link" href="/tela-05.html"><span class="side-label">Cabe no prazo?</span><span class="side-desc">Consultar encomenda ou simulação</span></a>
+  </div>
+</nav>
 
     <div class="container">
-        <div class="header">
-            <h1>04 - Cadastro de Moldes</h1>
-            <p id="status-texto">Carregando moldes...</p>
+        <div class="page-head">
+            <h1>Moldes da fábrica</h1>
+            <p>Escolha um molde na lista para conferir ou corrigir as quantidades.</p>
         </div>
 
         <!-- BUSCA -->
-        <div class="search-box">
+        <div class="search-box field">
+            <label class="field-label" for="busca">Buscar molde</label>
             <input
                 type="text"
                 id="busca"
-                placeholder="Buscar por nome ou código..."
+                placeholder="Digite o nome ou o código"
                 autocomplete="off"
             >
+            <p class="contagem" id="status-texto" role="status">Carregando moldes...</p>
         </div>
+
+        <div id="msg-moldes"></div>
 
         <!-- LISTA -->
         <div id="lista"></div>
@@ -42,12 +51,12 @@
         <div id="formulario">
             <div class="form-header">
                 <h2 id="form-titulo">Editar Molde</h2>
-                <button class="btn-voltar" id="btn-voltar">←</button>
+                <button class="btn-voltar" id="btn-voltar">← Voltar à lista</button>
             </div>
 
             <form id="form-molde">
                 <div class="form-group">
-                    <label for="unidades">Unidades Disponíveis</label>
+                    <label for="unidades">Unidades disponíveis</label>
                     <input
                         type="number"
                         id="unidades"
@@ -57,7 +66,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="pecas">Peças por Enchimento</label>
+                    <label for="pecas">Peças por enchimento</label>
                     <input
                         type="number"
                         id="pecas"
@@ -67,7 +76,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="enchimentos">Enchimentos por Dia</label>
+                    <label for="enchimentos">Enchimentos por dia</label>
                     <input
                         type="number"
                         id="enchimentos"
@@ -81,13 +90,14 @@
                         Cancelar
                     </button>
                     <button type="submit" class="btn btn-salvar">
-                        Salvar
+                        Salvar molde
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
+    <script src="js/menu.js"></script>
     <script>
         // ===== ESTADO GLOBAL =====
         let moldeLista = [];
@@ -101,8 +111,18 @@
         const btnVoltar = document.getElementById('btn-voltar');
         const btnCancelar = document.getElementById('btn-cancelar');
         const statusTexto = document.getElementById('status-texto');
+        const msgMoldes = document.getElementById('msg-moldes');
 
         // ===== FUNCTIONS =====
+
+        function mostrarMensagem(classe, texto) {
+            const aviso = document.createElement('div');
+            aviso.className = `alert ${classe}`;
+            aviso.setAttribute('role', 'alert');
+            aviso.textContent = texto;
+            msgMoldes.replaceChildren(aviso);
+            aviso.scrollIntoView({ block: 'center' });
+        }
 
         /**
          * Carrega moldes com termo de busca (ou todos se vazio)
@@ -115,12 +135,12 @@
                 if (!response.ok) throw new Error('Erro ao carregar moldes');
 
                 moldeLista = await response.json();
-                statusTexto.textContent = `${moldeLista.length} moldes carregados`;
+                statusTexto.textContent = `${moldeLista.length} moldes na lista`;
                 renderizarLista();
             } catch (erro) {
                 console.error(erro);
-                statusTexto.textContent = '❌ Erro ao carregar moldes';
-                divLista.innerHTML = `<div class="erro">${erro.message}</div>`;
+                statusTexto.textContent = 'Lista não carregada';
+                divLista.innerHTML = `<div class="erro">⚠ Não consegui carregar os moldes. Recarregue a página para tentar de novo.</div>`;
             }
         }
 
@@ -138,12 +158,19 @@
             moldeLista.forEach(molde => {
                 const item = document.createElement('div');
                 item.className = `molde-item ${molde.cadastrado ? 'cadastrado' : 'nao-cadastrado'}`;
+                const capacidade = Number(molde.unidades_disponiveis) * Number(molde.pecas_por_enchimento) * Number(molde.enchimentos_por_dia);
+                let selo = '<span class="selo selo-aviso">Não conferido</span>';
+                if (molde.cadastrado) {
+                    selo = capacidade > 0
+                        ? '<span class="selo selo-ok">Conferido</span>'
+                        : '<span class="selo selo-erro">Em falta</span>';
+                }
                 item.innerHTML = `
                     <div class="molde-info">
                         <div class="molde-nome">${molde.nome}</div>
                         <div class="molde-codigo">#${molde.produto_codigo}</div>
                     </div>
-                    <div class="molde-status"></div>
+                    <div class="molde-status">${selo}<span class="item-acao">Editar</span></div>
                 `;
                 item.addEventListener('click', () => abrirFormulario(molde));
                 divLista.appendChild(item);
@@ -155,6 +182,7 @@
          */
         function abrirFormulario(molde) {
             moldeAtual = molde;
+            msgMoldes.innerHTML = '';
 
             // Preenche formulário com dados já em memória
             document.getElementById('unidades').value = molde.unidades_disponiveis || '';
@@ -210,7 +238,15 @@ async function salvarMolde(event) {
             body: JSON.stringify(dados)
         });
 
-        // ... (resto do if de erros fica igual)
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Senha incorreta. Feche esta aba e abra a tela de novo para digitar a senha outra vez.');
+            }
+            if (response.status === 404) {
+                throw new Error('Molde não encontrado.');
+            }
+            throw new Error('O molde não foi salvo. Tente de novo.');
+        }
 
         const moldeAtualizado = await response.json();
 
@@ -223,9 +259,10 @@ async function salvarMolde(event) {
 
             fecharFormulario();
             renderizarLista();
+            mostrarMensagem('alert-ok', `✓ Molde salvo: ${moldeAtualizado.nome}.`);
         } catch (erro) {
             console.error(erro);
-            alert('Erro ao salvar: ' + erro.message);
+            mostrarMensagem('alert-error', `⚠ ${erro.message}`);
         }
     }
         // ===== EVENT LISTENERS =====

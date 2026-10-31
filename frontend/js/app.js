@@ -32,7 +32,7 @@ async function apiCall(path, options){
   try{
     res = await fetch('/api'+path, options);
   }catch(e){
-    throw new Error('Não consegui falar com o servidor. Confere se o backend (uvicorn) está rodando.');
+    throw new Error('Não consegui falar com o servidor. Verifique a internet e tente de novo. Se continuar, avise o responsável pelo sistema.');
   }
   if(!res.ok){
     let msg = 'Erro ao chamar '+path;
@@ -128,7 +128,7 @@ function handleFile(file){
         if(items && items.length){ found = items; break; }
       }
       if(!found || !found.length){
-        status.innerHTML = '<div class="alert alert-error">⚠ Não encontrei colunas de "Código" e "Quantidade" nesse arquivo. Tenta o modo "Digitar / colar" para esse recibo.</div>';
+        status.innerHTML = '<div class="alert alert-error">⚠ Não encontrei as colunas "Código" e "Quantidade" neste arquivo. Use a opção "Digitar códigos" para este recibo.</div>';
         parsedFileItems = null;
         return;
       }
@@ -136,7 +136,7 @@ function handleFile(file){
       status.innerHTML = '<div class="alert alert-ok">✓ '+found.length+' itens lidos de <b>'+file.name+'</b>. Clique em "Calcular valor".</div>';
     }catch(err){
       console.error(err);
-      status.innerHTML = '<div class="alert alert-error">⚠ Não consegui ler esse arquivo. Confere se é um .xlsx válido, ou usa o modo "Digitar / colar".</div>';
+      status.innerHTML = '<div class="alert alert-error">⚠ Não consegui ler este arquivo. Confira se é um .xlsx válido ou use a opção "Digitar códigos".</div>';
       parsedFileItems = null;
     }
   };
@@ -211,7 +211,7 @@ $('#btn-calcular').addEventListener('click', async ()=>{
   let items = [];
   if(inputMode==='file'){
     if(!parsedFileItems){
-      alertArea.innerHTML = '<div class="alert alert-warn">Escolhe um arquivo .xlsx primeiro.</div>';
+      alertArea.innerHTML = '<div class="alert alert-warn">Escolha um arquivo .xlsx primeiro.</div>';
       return;
     }
     items = parsedFileItems;
@@ -219,7 +219,7 @@ $('#btn-calcular').addEventListener('click', async ()=>{
     const text = $('#text-input').value;
     items = extractItemsFromText(text);
     if(!items.length){
-      alertArea.innerHTML = '<div class="alert alert-warn">Não encontrei nenhuma linha válida. Formato: código e quantidade, um por linha (ex: 0623, 10).</div>';
+      alertArea.innerHTML = '<div class="alert alert-warn">Não encontrei nenhuma linha válida. Digite o código e a quantidade, um item por linha (ex.: 0623, 10).</div>';
       return;
     }
   }
@@ -254,7 +254,7 @@ function renderResultado(calc, faltando){
   const area = $('#result-area');
   let html = '<div class="receipt"><div class="perf"></div>';
   html += '<div class="receipt-head">';
-  html += '<p class="rtitle">Recibo calculado</p>';
+  html += '<h2 class="rtitle">Recibo calculado</h2>';
   html += '<p class="rdate">'+fmtDateShort(calc.data)+(calc.nota ? ' · '+escapeHtml(calc.nota) : '')+'</p>';
   html += '</div>';
   html += '<div class="receipt-list">';
@@ -286,7 +286,7 @@ function renderResultado(calc, faltando){
   html += '</div></div>';
 
   if(faltando.length){
-    html = '<div class="alert alert-error" style="margin-top:16px;">⚠ '+faltando.length+' código(s) não encontrado(s) na tabela de preços: <b>'+faltando.join(', ')+'</b>. Clique em "+ cadastrar" ao lado do item, ou cadastre na aba "Tabela de preços" — eles não entraram no total ainda.</div>' + html;
+    html = '<div class="alert alert-error" style="margin-top:16px;">⚠ '+faltando.length+' código(s) não encontrado(s) na tabela de preços: <b>'+faltando.join(', ')+'</b>. Eles ainda não entraram no total. Clique em "+ cadastrar" ao lado do item ou cadastre na tela "Tabela de preços".</div>' + html;
   }
 
   area.innerHTML = html;
@@ -324,7 +324,8 @@ async function salvarRecibo(){
     });
     // `innerHTML +=` reconstrói os nós filhos, então o botão precisa ser
     // consultado de novo depois disso — a referência antiga fica órfã.
-    area.innerHTML += '<div class="alert alert-ok" style="margin-top:10px;">✓ Recibo salvo no histórico.</div>';
+    area.innerHTML += '<div class="alert alert-ok" style="margin-top:10px;">✓ Recibo salvo. Ele já aparece na tela "Recibos salvos".</div>';
+    atualizarSugestoesEncomenda();
     const btnDepois = $('#btn-salvar-recibo');
     if(btnDepois){ btnDepois.disabled = true; btnDepois.textContent = 'Salvo ✓'; }
   }catch(e){
@@ -361,14 +362,14 @@ function renderProdutosTable(filter){
     .filter(({p}) => !q || p.codigo.toLowerCase().includes(q) || p.nome.toLowerCase().includes(q));
 
   if(!list.length){
-    tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><div class="eicon">🔍</div><div class="etitle">Nada encontrado</div><div class="esub">Tenta outro código ou nome.</div></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><div class="eicon">🔍</div><div class="etitle">Nenhum produto encontrado</div><div class="esub">Tente outro código ou nome.</div></div></td></tr>';
   }else{
     tbody.innerHTML = list.map(({p,i})=>{
       return '<tr data-idx="'+i+'">'
         + '<td class="tcode"><input type="text" value="'+escapeAttr(p.codigo)+'" data-field="codigo"></td>'
         + '<td><input type="text" value="'+escapeAttr(p.nome)+'" data-field="nome"></td>'
         + '<td class="tprice"><input type="text" value="'+p.preco.toFixed(2)+'" data-field="preco"></td>'
-        + '<td><button class="del-btn" title="Remover">✕</button></td>'
+        + '<td><button class="del-btn">Remover</button></td>'
         + '</tr>';
     }).join('');
   }
@@ -382,9 +383,11 @@ function renderProdutosTable(filter){
       const idx = parseInt(e.target.closest('tr').dataset.idx);
       confirmModal('Remover produto?', 'Isso remove "'+produtos[idx].nome+'" da tabela de preços. Você pode desfazer restaurando a tabela original depois.', async ()=>{
         try{
-          await api.deleteProduto(produtos[idx].codigo);
+          const removido = produtos[idx];
+          await api.deleteProduto(removido.codigo);
           produtos.splice(idx,1);
           renderProdutosTable();
+          showToast('Produto removido: '+removido.codigo+' — '+removido.nome);
         }catch(e){
           $('#produtos-alert').innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
         }
@@ -415,6 +418,7 @@ async function onProdutoFieldChange(e){
     produtos[idx] = salvo;
     $('#produtos-alert').innerHTML = '';
     renderProdutosTable();
+    showToast('Alteração salva: '+salvo.codigo+' — '+salvo.nome);
   }catch(e){
     $('#produtos-alert').innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
     renderProdutosTable();
@@ -436,6 +440,7 @@ $('#btn-restaurar-catalogo').addEventListener('click', ()=>{
     try{
       produtos = await api.restaurarProdutos();
       renderProdutosTable();
+      showToast('Tabela original restaurada.');
     }catch(e){
       $('#produtos-alert').innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
     }
@@ -451,10 +456,10 @@ function openAddProdutoModal(prefillCodigo, onAdded){
   const existente = prefillCodigo ? produtos.find(p=>normalizeCode(p.codigo)===normalizeCode(prefillCodigo)) : null;
   const html = '<div class="modal-back" id="add-produto-back"><div class="modal">'
     + '<h3>'+(existente ? 'Atualizar produto' : 'Cadastrar produto')+'</h3>'
-    + '<p>'+(prefillCodigo ? 'Código <b>'+escapeHtml(normalizeCode(prefillCodigo))+'</b> não estava na tabela. Preenche o nome e o preço.' : 'Adiciona um novo item na tabela de preços.')+'</p>'
+    + '<p>'+(prefillCodigo ? 'Código <b>'+escapeHtml(normalizeCode(prefillCodigo))+'</b> não está na tabela. Preencha o nome e o preço.' : 'Adicione um novo item à tabela de preços.')+'</p>'
     + '<div class="field"><label class="field-label">Código</label><input type="text" id="ap-codigo" value="'+escapeAttr(prefillCodigo?normalizeCode(prefillCodigo):(existente?existente.codigo:''))+'" '+(prefillCodigo?'readonly':'')+'></div>'
-    + '<div class="field"><label class="field-label">Nome do produto</label><input type="text" id="ap-nome" value="'+escapeAttr(existente?existente.nome:'')+'" placeholder="Ex: Buda Nepal Proteção G"></div>'
-    + '<div class="field"><label class="field-label">Preço (R$)</label><input type="text" id="ap-preco" value="'+(existente?existente.preco.toFixed(2):'')+'" placeholder="Ex: 6.25"></div>'
+    + '<div class="field"><label class="field-label">Nome do produto</label><input type="text" id="ap-nome" value="'+escapeAttr(existente?existente.nome:'')+'" placeholder="Ex.: Buda Nepal Proteção G"></div>'
+    + '<div class="field"><label class="field-label">Preço (R$)</label><input type="text" id="ap-preco" value="'+(existente?existente.preco.toFixed(2):'')+'" placeholder="Ex.: 6,25"></div>'
     + '<div id="ap-alert"></div>'
     + '<div class="row-actions"><button class="btn btn-ghost" id="ap-cancel">Cancelar</button><button class="btn btn-primary" id="ap-salvar" style="margin-left:auto;">'+(existente?'Atualizar':'Cadastrar')+'</button></div>'
     + '</div></div>';
@@ -499,12 +504,14 @@ function openAddProdutoModal(prefillCodigo, onAdded){
 
 // ---------- toast ----------
 let toastTimer = null;
-function showToast(msg){
+function showToast(msg, tipo){
   const el = $('#toast');
-  el.textContent = msg;
+  const ehErro = tipo === 'erro';
+  el.textContent = (ehErro ? '⚠ ' : '✓ ') + msg;
+  el.classList.toggle('toast-erro', ehErro);
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>el.classList.remove('show'), 2600);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 6000);
 }
 
 // ---------- compartilhar recibo ----------
@@ -538,17 +545,40 @@ async function shareRecibo(calc){
   }
   try{
     await navigator.clipboard.writeText(text);
-    showToast('Recibo copiado — cola no WhatsApp, e-mail, etc.');
+    showToast('Recibo copiado. Cole no WhatsApp ou no e-mail.');
   }catch(e){
-    showToast('Não consegui copiar automaticamente. Selecione o texto manualmente.');
+    showToast('Não consegui copiar o recibo. Tente de novo.', 'erro');
   }
 }
 
 // ---------- historico tab ----------
+const gruposAbertos = new Set();
+const ROTULO_SEM_ENCOMENDA = 'Recibos sem encomenda';
+
+function atualizarSugestoesEncomenda(){
+  const nomes = [...new Set(historico.map(h=>h.encomenda).filter(Boolean))];
+  $('#receipt-encomenda-lista').innerHTML = nomes.map(n=>'<option value="'+escapeAttr(n)+'">').join('');
+}
+
+function filtrarHistorico(){
+  const termo = normHeader($('#historico-busca').value);
+  let visiveis = 0;
+  $$('details.encomenda').forEach(d=>{
+    const mostrar = !termo || normHeader(d.dataset.busca).includes(termo);
+    d.hidden = !mostrar;
+    if(mostrar) visiveis++;
+  });
+  const semResultado = $('#historico-sem-resultado');
+  if(semResultado) semResultado.hidden = visiveis > 0;
+}
+$('#historico-busca').addEventListener('input', filtrarHistorico);
+
 async function renderHistorico(){
   const el = $('#historico-content');
+  $('#historico-busca-area').hidden = !historico.length;
+  atualizarSugestoesEncomenda();
   if(!historico.length){
-    el.innerHTML = '<div class="card"><div class="empty"><div class="eicon">🧾</div><div class="etitle">Nenhum recibo salvo ainda</div><div class="esub">Calcule um recibo na aba "Calcular" e clique em "Salvar no histórico".</div></div></div>';
+    el.innerHTML = '<div class="card"><div class="empty"><div class="eicon">🧾</div><div class="etitle">Nenhum recibo salvo ainda</div><div class="esub">Calcule um recibo na tela "Lançar recibo" e clique em "Salvar no histórico".</div></div></div>';
     return;
   }
 
@@ -605,46 +635,48 @@ async function renderHistorico(){
     const diariasDaEncomenda = (nome && diariasPos.has(nome)) ? diariasPos.get(nome) : [];
     const totalDiarias = diariasDaEncomenda.reduce((s,d)=>s+d.valor, 0);
 
-    let g = '<div class="card" style="padding:14px 14px 16px;">';
-    g += '<div class="encomenda-head"><h3 class="encomenda-title">'+(nome?escapeHtml(nome):'Recibos sem encomenda')+'</h3>'
-      + '<span class="encomenda-count">'+itens.length+' recibo'+(itens.length!==1?'s':'')+'</span></div>';
+    const chaveGrupo = nome || '';
+    let g = '<details class="encomenda" data-grupo="'+escapeAttr(chaveGrupo)+'" data-busca="'+escapeAttr(nome || ROTULO_SEM_ENCOMENDA)+'"'+(gruposAbertos.has(chaveGrupo)?' open':'')+'>';
+    g += '<summary class="encomenda-linha">'
+      + '<span class="encomenda-title">'+(nome?escapeHtml(nome):ROTULO_SEM_ENCOMENDA)+'</span>'
+      + '<span class="encomenda-pecas">'+pecasGrupo.toLocaleString('pt-BR')+' peças</span>'
+      + '<span class="encomenda-valor">'+fmtMoney(totalGrupo)
+      + (totalDiarias > 0 ? '<small>+ '+fmtMoney(totalDiarias)+' em diárias</small>' : '')
+      + '</span></summary>';
+    g += '<div class="encomenda-corpo">';
 
     // Recibos
     itens.forEach(({h, idx})=>{
       g += '<div class="hist-item" data-idx="'+idx+'">'
-        + '<input type="checkbox" class="sel-recibo" data-idx="'+idx+'">'
+        + '<input type="checkbox" class="sel-recibo" data-idx="'+idx+'" aria-label="Selecionar recibo de '+fmtDateShort(h.data)+'">'
         + '<div class="hleft"><div class="hdate">'+fmtDateShort(h.data)+'</div><div class="hnote">'+(h.nota?escapeHtml(h.nota):'Recibo sem nota')+'</div></div>'
         + '<div class="hright"><div class="hval">'+fmtMoney(h.total)+'</div><div class="hqty">'+h.qtdTotal+' peças</div></div>'
+        + '<span class="item-acao">Ver recibo</span>'
         + '</div>';
     });
 
     // Diárias
-    if(nome){
-      if(diariasDaEncomenda.length){
-        g += '<div class="diarias-section">';
-        g += '<div class="diarias-title">Diárias</div>';
-        diariasDaEncomenda.forEach(d=>{
-          g += '<div class="diaria-item" data-diaria-id="'+d.id+'">'
-            + '<div class="dleft"><div class="ddata">'+(d.data?fmtDateShort(d.data):'sem data')+'</div><div class="dcomentario">'+(d.comentario?escapeHtml(d.comentario):'sem comentário')+'</div></div>'
-            + '<div class="dright"><div class="dval">'+fmtMoney(d.valor)+'</div></div>'
-            + '</div>';
-        });
-        g += '</div>';
-      }
-      g += '<div class="btn-add-diaria-wrapper"><button class="btn btn-ghost btn-sm btn-add-diaria" data-encomenda="'+escapeAttr(nome)+'">+ Adicionar diária</button></div>';
+    if(nome && diariasDaEncomenda.length){
+      g += '<div class="diarias-section">';
+      g += '<div class="diarias-title">Diárias</div>';
+      diariasDaEncomenda.forEach(d=>{
+        g += '<div class="diaria-item" data-diaria-id="'+d.id+'">'
+          + '<div class="dleft"><div class="ddata">'+(d.data?fmtDateShort(d.data):'Sem data')+'</div><div class="dcomentario">'+(d.comentario?escapeHtml(d.comentario):'Sem comentário')+'</div></div>'
+          + '<div class="dright"><div class="dval">'+fmtMoney(d.valor)+'</div></div>'
+          + '<span class="item-acao">Editar</span>'
+          + '</div>';
+      });
+      g += '</div>';
     }
 
-    g += '<div class="encomenda-foot"><div class="encomenda-foot-stats">'
-      + '<span><b>'+pecasGrupo+'</b> peças</span>'
-      + '<span class="efoot-total">'+fmtMoney(totalGrupo)+' recibos</span>';
-    if(totalDiarias > 0){
-      g += '<span class="efoot-diarias">+ '+fmtMoney(totalDiarias)+' diárias</span>';
-    }
-    g += '</div>';
+    g += '<div class="encomenda-foot"><span class="encomenda-count">'+itens.length+' recibo'+(itens.length!==1?'s':'')+'</span>';
     if(nome){
-      g += '<button class="btn btn-ghost btn-sm btn-alterar-encomenda" data-nome="'+escapeAttr(nome)+'">Alterar</button>';
+      g += '<div class="encomenda-acoes">'
+        + '<button class="btn btn-ghost btn-sm btn-add-diaria" data-encomenda="'+escapeAttr(nome)+'">+ Adicionar diária</button>'
+        + '<button class="btn btn-ghost btn-sm btn-alterar-encomenda" data-nome="'+escapeAttr(nome)+'">Alterar nome</button>'
+        + '</div>';
     }
-    g += '</div></div>';
+    g += '</div></div></details>';
     return g;
   }
 
@@ -652,19 +684,28 @@ async function renderHistorico(){
   const nomesExistentes = gruposNomeados.map(([nome])=>nome);
   html += '<div class="sel-bar" id="sel-bar" style="display:none;">'
     + '<span id="sel-count"></span>'
-    + '<input type="text" id="sel-destino" list="encomenda-suggestions" placeholder="Nome da encomenda de destino">'
+    + '<input type="text" id="sel-destino" list="encomenda-suggestions" aria-label="Encomenda de destino" placeholder="Mover para qual encomenda?">'
     + '<datalist id="encomenda-suggestions">'+nomesExistentes.map(n=>'<option value="'+escapeAttr(n)+'">').join('')+'</datalist>'
-    + '<button class="btn btn-primary btn-sm" id="sel-imprimir">🖨 Imprimir</button>'
-    + '<button class="btn btn-primary btn-sm" id="sel-mover">Mover selecionados</button>'
+    + '<button class="btn btn-primary btn-sm" id="sel-imprimir">Imprimir selecionados</button>'
+    + '<button class="btn btn-ghost btn-sm" id="sel-mover">Mover selecionados</button>'
     + '<button class="btn btn-ghost btn-sm" id="sel-cancelar">Cancelar seleção</button>'
     + '</div>';
 
   gruposNomeados.forEach(([nome, itens])=>{ html += renderGrupo(nome, itens); });
   if(semEncomenda.length) html += renderGrupo(null, semEncomenda);
+  html += '<div class="card" id="historico-sem-resultado" hidden><div class="empty"><div class="etitle">Nenhuma encomenda com esse nome</div><div class="esub">Confira a escrita ou apague a busca para ver todas.</div></div></div>';
 
   html += '<div class="row-actions"><button class="btn btn-danger btn-sm" id="btn-limpar-historico">Limpar todo o histórico</button></div>';
 
   el.innerHTML = html;
+  filtrarHistorico();
+
+  $$('details.encomenda', el).forEach(d=>{
+    d.addEventListener('toggle', ()=>{
+      if(d.open) gruposAbertos.add(d.dataset.grupo);
+      else gruposAbertos.delete(d.dataset.grupo);
+    });
+  });
 
   function atualizarBarraSelecao(){
     const marcados = $$('.sel-recibo:checked', el);
@@ -707,17 +748,17 @@ async function renderHistorico(){
     if(!marcados.length) return;
     const destino = $('#sel-destino').value.trim();
     if(!destino){
-      alertHost.insertAdjacentHTML('afterend', '<div class="alert alert-warn">Informe pra qual encomenda mover.</div>');
+      alertHost.insertAdjacentHTML('afterend', '<div class="alert alert-warn">Informe para qual encomenda mover.</div>');
       return;
     }
     const ids = marcados.map(cb => historico[parseInt(cb.dataset.idx)].id);
     // Sistema de segurança: mover em lote também pede confirmação.
-    confirmModal('Mover '+ids.length+' recibo(s)?', 'Isso move '+ids.length+' recibo(s) selecionado(s) pra encomenda "'+destino+'".', async ()=>{
+    confirmModal('Mover '+ids.length+' recibo(s)?', 'Isso move '+ids.length+' recibo(s) selecionado(s) para a encomenda "'+destino+'".', async ()=>{
       try{
         await api.moverParaEncomenda(ids, destino);
         historico.forEach(h=>{ if(ids.includes(h.id)) h.encomenda = destino; });
         renderHistorico();
-        showToast(ids.length+' recibo(s) movido(s) pra "'+destino+'".');
+        showToast(ids.length+' recibo(s) movido(s) para "'+destino+'".');
       }catch(e){
         renderHistorico();
         el.insertAdjacentHTML('afterbegin', '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>');
@@ -751,88 +792,45 @@ async function renderHistorico(){
 
 // ---------- imprimir selecionados ----------
 function imprimirSelecionados(idsRecibos){
-  // Filtra apenas os recibos selecionados
   const recibosParaImprimir = historico.filter(h => idsRecibos.includes(h.id));
-
   if(!recibosParaImprimir.length) return;
 
-  // Cria um elemento para impressão (SEM display:none, vamos usar class ao invés)
+  // Remove a folha anterior: sem isso, cada impressão repetiria os recibos da última.
+  $$('.print-area-hidden').forEach(area => area.remove());
+
+  const qtd = recibosParaImprimir.length;
   const printDiv = document.createElement('div');
   printDiv.className = 'print-area-hidden';
-  printDiv.id = 'print-area-' + Date.now();
 
-  // Cria o HTML para impressão com melhor formatação
-  let html = '<style>' +
-    '@media print { ' +
-    'body { background: white; margin: 0; padding: 0; } ' +
-    '.app, .header, .tabs, #panel-calc, #panel-produtos { display: none !important; } ' +
-    '.print-area-hidden { display: block !important; margin: 0; padding: 0; } ' +
-    '.print-header { page-break-after: avoid; } ' +
-    '.print-recibo { page-break-inside: avoid; margin-bottom: 20pt; } ' +
-    '} ' +
-    '</style>';
+  let html = '<div class="pr-cabecalho">'
+    + '<p class="pr-empresa">J J Marmorite</p>'
+    + '<h1 class="pr-titulo">Recibos de produção</h1>'
+    + '<p class="pr-contagem">'+qtd+' recibo'+(qtd!==1?'s':'')+' selecionado'+(qtd!==1?'s':'')+'. Impresso em '+fmtDateShort(new Date().toISOString())+'.</p>'
+    + '</div>';
 
-  html += '<div style="font-family: \'Inter\', system-ui, sans-serif; padding: 20px; color: #111;">';
-  html += '<div class="print-header" style="margin-bottom: 28px; border-bottom: 1px solid #111; padding-bottom: 14px;">';
-  html += '<p style="font-family: \'JetBrains Mono\', monospace; margin: 0 0 6px 0; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #0B8F83;">J J Marmorite</p>';
-  html += '<h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em;">Recibos de Produção</h1>';
-  html += '<p style="margin: 6px 0 0; font-size: 12px; color: #555;">';
-  html += recibosParaImprimir.length + ' recibo' + (recibosParaImprimir.length !== 1 ? 's' : '') + ' selecionado' + (recibosParaImprimir.length !== 1 ? 's' : '');
-  html += '</p></div>';
-
-  // Renderiza cada recibo
   recibosParaImprimir.forEach((calc, idx) => {
-    html += '<div class="print-recibo" style="background: #fff; border: 1px solid #D4D8D8; border-radius: 10px; margin: 0 0 22px 0; padding: 0; overflow: hidden;">';
-
-    // Cabeçalho do recibo
-    html += '<div style="padding: 14px 18px 10px; background: #fff; border-bottom: 1px solid #E6E9E9;">';
-    html += '<div style="font-weight: 600; font-size: 15px; margin: 0 0 3px 0; color: #111;">';
-    html += 'Recibo #' + (idx + 1) + (calc.nota ? ' — ' + escapeHtml(calc.nota) : '');
-    html += '</div>';
-    html += '<div style="font-size: 12px; color: #555; margin: 0;">';
-    html += fmtDateShort(calc.data);
-    if(calc.encomenda) html += ' | Encomenda: ' + escapeHtml(calc.encomenda);
-    html += '</div></div>';
-
-    // Itens
-    html += '<div style="padding: 10px 18px;">';
+    html += '<section class="pr-recibo">';
+    html += '<h2 class="pr-recibo-titulo">Recibo '+(idx + 1)+(calc.nota ? ': '+escapeHtml(calc.nota) : '')+'</h2>';
+    html += '<p class="pr-recibo-dados">Data: '+fmtDateShort(calc.data)+(calc.encomenda ? '. Encomenda: '+escapeHtml(calc.encomenda)+'.' : '.')+'</p>';
+    html += '<table><thead><tr><th>Código</th><th>Produto</th><th class="pr-num">Qtd.</th><th class="pr-num">Preço</th><th class="pr-num">Subtotal</th></tr></thead><tbody>';
     calc.itens.forEach(it => {
-      if (it.ok) {
-        html += '<div style="display: grid; grid-template-columns: 50px 1fr 70px 90px; gap: 10px; padding: 7px 0; border-bottom: 1px solid #EEF0F0; align-items: center; font-size: 12px;">'
-          + '<span style="font-family: \'JetBrains Mono\', monospace; font-weight: 500; color: #777;">' + it.codigo + '</span>'
-          + '<span style="color: #111;">' + escapeHtml(it.nome) + '</span>'
-          + '<span style="text-align: right; color: #555;">' + it.quantidade.toFixed(0) + '× ' + it.preco.toFixed(2) + '</span>'
-          + '<span style="text-align: right; font-weight: 600; color: #111;">' + fmtMoney(it.subtotal) + '</span>'
-          + '</div>';
-      } else {
-        html += '<div style="display: grid; grid-template-columns: 50px 1fr 70px 90px; gap: 10px; padding: 7px 0; border-bottom: 1px solid #EEF0F0; align-items: center; font-size: 12px; opacity: 0.6; color: #555;">'
-          + '<span style="font-family: \'JetBrains Mono\', monospace; font-weight: 500;">' + it.codigo + '</span>'
-          + '<span>✗ não encontrado</span>'
-          + '<span style="text-align: right;">' + it.quantidade.toFixed(0) + '×</span>'
-          + '<span style="text-align: right;">—</span>'
-          + '</div>';
-      }
+      html += '<tr'+(it.ok ? '' : ' class="pr-falta"')+'>'
+        + '<td>'+escapeHtml(it.codigo)+'</td>'
+        + '<td>'+(it.ok ? escapeHtml(it.nome) : 'CÓDIGO NÃO ENCONTRADO')+'</td>'
+        + '<td class="pr-num">'+it.quantidade+'</td>'
+        + '<td class="pr-num">'+(it.ok ? fmtMoney(it.preco) : '—')+'</td>'
+        + '<td class="pr-num">'+(it.ok ? fmtMoney(it.subtotal) : '—')+'</td>'
+        + '</tr>';
     });
-    html += '</div>';
-
-    // Rodapé com totais
-    html += '<div style="padding: 12px 18px; background: #F5F7F7; border-top: 1px solid #D4D8D8;">';
-    html += '<div style="display: grid; grid-template-columns: 1fr auto; gap: 15px; align-items: center; margin-bottom: 8px;">';
-    html += '<span style="font-family: \'JetBrains Mono\', monospace; font-weight: 500; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #555;">Total a receber</span>';
-    html += '<span style="font-weight: 700; font-size: 20px; letter-spacing: -0.02em; color: #111;">' + fmtMoney(calc.total) + '</span>';
-    html += '</div>';
-    html += '<div style="text-align: right; font-size: 11px; color: #555; padding-top: 6px; border-top: 1px solid #E6E9E9;">';
-    html += '<strong>' + calc.qtdTotal + ' peça' + (calc.qtdTotal !== 1 ? 's' : '') + '</strong>';
-    html += '</div></div></div>';
+    html += '</tbody></table>';
+    html += '<div class="pr-total"><span>Total a receber ('+calc.qtdTotal+' peça'+(calc.qtdTotal!==1?'s':'')+')</span><span>'+fmtMoney(calc.total)+'</span></div>';
+    html += '</section>';
   });
 
-  html += '</div>';
   printDiv.innerHTML = html;
-
-  // Adiciona o elemento ao DOM (visível pra impressão)
   document.body.appendChild(printDiv);
+  window.addEventListener('afterprint', () => printDiv.remove(), {once:true});
 
-  // Abre a impressão
   setTimeout(() => {
     window.print();
   }, 300);
@@ -841,8 +839,8 @@ function imprimirSelecionados(idsRecibos){
 // ---------- alterar (renomear) uma encomenda inteira ----------
 function abrirRenomearEncomenda(nomeAtual){
   const html = '<div class="modal-back" id="ren-back"><div class="modal">'
-    + '<h3>Alterar encomenda</h3>'
-    + '<p>Renomeia essa encomenda em todos os recibos que pertencem a ela.</p>'
+    + '<h3>Alterar nome da encomenda</h3>'
+    + '<p>O novo nome vale para todos os recibos desta encomenda.</p>'
     + '<div class="field"><label class="field-label">Nome da encomenda</label><input type="text" id="ren-novo" value="'+escapeAttr(nomeAtual)+'"></div>'
     + '<div id="ren-alert"></div>'
     + '<div class="row-actions"><button class="btn btn-ghost" id="ren-cancelar">Cancelar</button><button class="btn btn-primary" id="ren-salvar" style="margin-left:auto;">Salvar</button></div>'
@@ -860,8 +858,9 @@ function abrirRenomearEncomenda(nomeAtual){
       try{
         await api.renomearEncomenda(nomeAtual, novoNome);
         historico.forEach(h=>{ if(h.encomenda===nomeAtual) h.encomenda = novoNome; });
+        if(gruposAbertos.delete(nomeAtual)) gruposAbertos.add(novoNome);
         renderHistorico();
-        showToast('Encomenda alterada.');
+        showToast('Nome da encomenda alterado.');
       }catch(e){
         abrirRenomearEncomenda(nomeAtual);
         $('#ren-alert').innerHTML = '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>';
@@ -877,7 +876,7 @@ function abrirAdicionarDiaria(encomenda){
     + '<h3>Adicionar diária — '+escapeHtml(encomenda)+'</h3>'
     + '<div class="field"><label class="field-label">Data (opcional)</label><input type="date" id="add-diaria-data" value="'+dataHoje+'"></div>'
     + '<div class="field"><label class="field-label">Valor (R$)</label><input type="number" id="add-diaria-valor" value="120" step="0.01" min="0"></div>'
-    + '<div class="field"><label class="field-label">Comentário (opcional)</label><input type="text" id="add-diaria-comentario" placeholder="ex: Montagem"></div>'
+    + '<div class="field"><label class="field-label">Comentário (opcional)</label><input type="text" id="add-diaria-comentario" placeholder="Ex.: Montagem"></div>'
     + '<div id="add-diaria-alert"></div>'
     + '<div class="row-actions"><button class="btn btn-ghost" id="add-diaria-cancelar">Cancelar</button><button class="btn btn-primary" id="add-diaria-salvar" style="margin-left:auto;">Adicionar</button></div>'
     + '</div></div>';
@@ -947,7 +946,7 @@ function abrirEditarDiaria(diaria){
       return;
     }
 
-    confirmModal('Confirmar alteração?', 'Atualiza a diária pra R$ '+valor.toFixed(2)+'.', async ()=>{
+    confirmModal('Confirmar alteração?', 'Atualiza a diária para R$ '+valor.toFixed(2)+'.', async ()=>{
       try{
         await api.editarDiaria(diaria.id, {data: data||null, valor, comentario: comentario||null});
         renderHistorico();
@@ -961,7 +960,7 @@ function abrirEditarDiaria(diaria){
 }
 
 function abrirDetalheHistorico(calc, idx){
-  let html = '<div class="modal-back" id="detail-back"><div class="modal" style="max-width:440px; max-height:82vh; overflow-y:auto;">';
+  let html = '<div class="modal-back" id="detail-back"><div class="modal" style="max-width:600px; max-height:86vh; overflow-y:auto;">';
   html += '<h3>'+(calc.nota?escapeHtml(calc.nota):'Recibo')+'</h3>';
   html += '<p style="margin-top:-6px;">'+fmtDateShort(calc.data)+' · '+calc.qtdTotal+' peças</p>';
   html += '<div class="receipt-list" style="padding:0;">';
@@ -1008,13 +1007,13 @@ function abrirDetalheHistorico(calc, idx){
 // ---------- edição de recibo salvo ----------
 function abrirEdicaoRecibo(calc, idx){
   const dataInputVal = (calc.data || '').slice(0, 10); // ISO -> AAAA-MM-DD
-  let html = '<div class="modal-back" id="edit-back"><div class="modal" style="max-width:480px; max-height:86vh; overflow-y:auto;">';
+  let html = '<div class="modal-back" id="edit-back"><div class="modal" style="max-width:760px; max-height:90vh; overflow-y:auto;">';
   html += '<h3>Editar recibo</h3>';
   html += '<div class="field"><label class="field-label">Encomenda</label><input type="text" id="ed-encomenda" value="'+escapeAttr(calc.encomenda||'')+'"></div>';
   html += '<div class="field"><label class="field-label">Nota</label><input type="text" id="ed-nota" value="'+escapeAttr(calc.nota||'')+'"></div>';
   html += '<div class="field"><label class="field-label">Data</label><input type="date" id="ed-data" value="'+dataInputVal+'"></div>';
   html += '<div class="table-scroll" style="max-height:280px;"><table><thead><tr>'
-    + '<th style="width:60px;">Código</th><th>Produto</th><th style="width:70px;">Qtd</th><th style="width:80px;">Preço</th><th style="width:28px;"></th>'
+    + '<th style="width:80px;">Código</th><th>Produto</th><th style="width:90px;">Qtd.</th><th style="width:110px;">Preço</th><th style="width:60px;"></th>'
     + '</tr></thead><tbody id="ed-itens-tbody">';
   calc.itens.forEach((it, i)=>{
     html += '<tr data-i="'+i+'">'
@@ -1022,7 +1021,7 @@ function abrirEdicaoRecibo(calc, idx){
       + '<td><input type="text" data-field="nome" value="'+escapeAttr(it.nome||'')+'"></td>'
       + '<td><input type="text" data-field="quantidade" value="'+it.quantidade+'"></td>'
       + '<td class="tprice"><input type="text" data-field="preco" value="'+it.preco.toFixed(2)+'"></td>'
-      + '<td><button class="del-btn" title="Remover linha">✕</button></td>'
+      + '<td><button class="del-btn" title="Remover linha" aria-label="Remover linha">✕</button></td>'
       + '</tr>';
   });
   html += '</tbody></table></div>';
@@ -1075,7 +1074,7 @@ function abrirEdicaoRecibo(calc, idx){
     const nota = $('#ed-nota').value.trim();
 
     // Sistema de segurança: nenhuma alteração é salva sem confirmação explícita.
-    confirmModal('Confirmar alteração deste recibo?', 'Isso substitui os dados salvos deste recibo. Confere antes de confirmar — essa ação não tem desfazer.', async ()=>{
+    confirmModal('Confirmar alteração deste recibo?', 'Isso substitui os dados salvos deste recibo. Confira antes de confirmar: essa ação não pode ser desfeita.', async ()=>{
       try{
         const salvo = await api.editarRecibo(calc.id, {nota, encomenda, data, itens});
         const atualizado = {
@@ -1119,5 +1118,6 @@ async function init(){
     $('#panel-calc').insertAdjacentHTML('afterbegin', '<div class="alert alert-error">⚠ '+escapeHtml(e.message)+'</div>');
   }
   renderProdutosTable();
+  atualizarSugestoesEncomenda();
 }
 init().then(abrirAbaDoEndereco);

@@ -9,65 +9,77 @@
 </head>
 <body>
 <nav class="sidebar" aria-label="Menu principal">
-  <div class="sidebar-brand">
-    <p class="sidebar-name">J J Marmorite</p>
-    <p class="sidebar-sub">Ficha de Produção</p>
+  <div class="sidebar-top">
+    <div class="sidebar-brand">
+      <p class="sidebar-name">J J Marmorite</p>
+      <p class="sidebar-sub">Ficha de produção</p>
+      <p class="stamp" id="today-stamp">—</p>
+    </div>
+    <button type="button" class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="menu-links">Menu</button>
   </div>
-  <button class="tab-btn side-link active" data-tab="calc"><span class="num">01</span><span class="side-text"><span class="side-label">Calcular</span><span class="side-desc">Novo recibo e valor a receber</span></span></button>
-  <button class="tab-btn side-link" data-tab="produtos"><span class="num">02</span><span class="side-text"><span class="side-label">Tabela de preços</span><span class="side-desc">Códigos, produtos e preços</span></span></button>
-  <button class="tab-btn side-link" data-tab="historico"><span class="num">03</span><span class="side-text"><span class="side-label">Histórico</span><span class="side-desc">Recibos salvos por encomenda</span></span></button>
-  <a class="side-link" href="/tela-04.html"><span class="num">04</span><span class="side-text"><span class="side-label">Moldes</span><span class="side-desc">Cadastro dos moldes</span></span></a>
-  <a class="side-link" href="/tela-05.html"><span class="num">05</span><span class="side-text"><span class="side-label">Capacidade</span><span class="side-desc">A encomenda cabe no prazo?</span></span></a>
+  <div class="menu-links" id="menu-links">
+    <button class="tab-btn side-link active" data-tab="calc"><span class="side-label">Lançar recibo</span><span class="side-desc">Calcular o valor a receber</span></button>
+    <button class="tab-btn side-link" data-tab="produtos"><span class="side-label">Tabela de preços</span><span class="side-desc">Códigos, produtos e preços</span></button>
+    <button class="tab-btn side-link" data-tab="historico"><span class="side-label">Recibos salvos</span><span class="side-desc">Consultar por encomenda</span></button>
+    <a class="side-link" href="/tela-04.html"><span class="side-label">Moldes da fábrica</span><span class="side-desc">Conferir quantos moldes existem</span></a>
+    <a class="side-link" href="/tela-05.html"><span class="side-label">Cabe no prazo?</span><span class="side-desc">Consultar encomenda ou simulação</span></a>
+  </div>
 </nav>
 
 <div class="app">
 
-  <div class="header">
-    <div>
-      <p class="brand-eyebrow">Ficha de Produção</p>
-      <h1 class="brand-title">J J Marmorite</h1>
-      <p class="brand-sub">Confere código, soma quantidade × preço, guarda o histórico.</p>
-    </div>
-    <div class="stamp" id="today-stamp">—</div>
-  </div>
-
   <!-- ===== TAB: CALCULAR ===== -->
   <div class="panel active" id="panel-calc">
+    <div class="page-head">
+      <h1>Lançar recibo</h1>
+      <p>Informe os itens e o nome da encomenda. O sistema confere os preços e soma o valor a receber.</p>
+    </div>
+
     <div class="card">
-      <h2>Novo recibo</h2>
-      <p class="hint">Solte o arquivo .xlsx do recibo, ou digite os códigos e quantidades à mão.</p>
+      <div class="etapa">
+        <h2>1. Itens do recibo</h2>
+        <p class="hint">Envie o arquivo .xlsx do recibo ou digite os códigos e as quantidades.</p>
 
-      <div class="mode-toggle">
-        <button class="mode-btn active" id="mode-file-btn">Arquivo .xlsx</button>
-        <button class="mode-btn" id="mode-text-btn">Digitar / colar</button>
-      </div>
-
-      <div id="mode-file">
-        <div class="dropzone" id="dropzone">
-          <div class="icon">📎</div>
-          <div class="label"><b>Clique para escolher</b> ou arraste o arquivo aqui</div>
-          <input type="file" id="file-input" accept=".xlsx,.xls">
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="mode-file-btn">Enviar arquivo</button>
+          <button class="mode-btn" id="mode-text-btn">Digitar códigos</button>
         </div>
-        <div id="file-status"></div>
+
+        <div id="mode-file">
+          <div class="dropzone" id="dropzone">
+            <div class="icon">📎</div>
+            <div class="label"><b>Clique para escolher o arquivo</b> ou arraste até aqui</div>
+            <input type="file" id="file-input" accept=".xlsx,.xls">
+          </div>
+          <div id="file-status"></div>
+        </div>
+
+        <div id="mode-text" style="display:none;">
+          <textarea id="text-input" aria-label="Códigos e quantidades, um item por linha" placeholder="0623, 10&#10;0462, 5&#10;0134  15&#10;&#10;Um item por linha: código e quantidade"></textarea>
+        </div>
       </div>
 
-      <div id="mode-text" style="display:none;">
-        <textarea id="text-input" placeholder="0623, 10&#10;0462, 5&#10;0134  15&#10;...&#10;&#10;um item por linha: código e quantidade"></textarea>
-      </div>
+      <div class="etapa">
+        <h2>2. Dados da encomenda</h2>
+        <div class="field">
+          <label class="field-label" for="receipt-encomenda">Nome da encomenda</label>
+          <span class="field-help">Junta os recibos do mesmo pedido. Sem o nome, o recibo não aparece na consulta de prazo.</span>
+          <input type="text" id="receipt-encomenda" list="receipt-encomenda-lista" autocomplete="off" placeholder="Ex.: Loja Estrela D'água">
+          <datalist id="receipt-encomenda-lista"></datalist>
+        </div>
 
-      <div class="field" style="margin-top:14px;">
-        <label class="field-label">Encomenda (opcional — agrupa recibos do mesmo pedido no histórico)</label>
-        <input type="text" id="receipt-encomenda" placeholder="Ex: Loja Estrela D'água">
-      </div>
-
-      <div class="field">
-        <label class="field-label">Nota (opcional — observação livre)</label>
-        <input type="text" id="receipt-note" placeholder="Ex: Recibo nº 2485">
-      </div>
-
-      <div class="field">
-        <label class="field-label">Data do recibo (opcional — deixe em branco se é de hoje)</label>
-        <input type="date" id="receipt-date">
+        <details class="mais-dados">
+          <summary>Mais dados (opcional): nota e data</summary>
+          <div class="field">
+            <label class="field-label" for="receipt-note">Nota</label>
+            <input type="text" id="receipt-note" placeholder="Ex.: Recibo nº 2485">
+          </div>
+          <div class="field">
+            <label class="field-label" for="receipt-date">Data do recibo</label>
+            <span class="field-help">Deixe em branco se o recibo é de hoje.</span>
+            <input type="date" id="receipt-date">
+          </div>
+        </details>
       </div>
 
       <div id="calc-alert-area"></div>
@@ -83,39 +95,50 @@
 
   <!-- ===== TAB: PRODUTOS ===== -->
   <div class="panel" id="panel-produtos">
+    <div class="page-head">
+      <h1>Tabela de preços</h1>
+      <p>Clique em qualquer campo para corrigir. A alteração é salva quando você sai do campo.</p>
+    </div>
     <div class="card">
-      <h2>Tabela de preços</h2>
-      <p class="hint">Editável — clique em qualquer campo para ajustar. Muda pouco, mas quando mudar, atualiza aqui.</p>
       <div class="search-bar">
-        <input type="text" id="produto-search" placeholder="Buscar por código ou nome...">
-        <button class="btn btn-primary btn-sm" id="btn-add-produto">+ Produto</button>
+        <input type="text" id="produto-search" aria-label="Buscar produto por código ou nome" placeholder="Buscar por código ou nome">
+        <button class="btn btn-primary" id="btn-add-produto">+ Cadastrar produto</button>
       </div>
       <div id="produtos-alert"></div>
       <div class="table-scroll">
         <table id="produtos-table">
-          <thead><tr><th style="width:70px;">Código</th><th>Produto</th><th style="width:90px;">Preço</th><th style="width:34px;"></th></tr></thead>
+          <thead><tr><th class="col-codigo">Código</th><th>Produto</th><th class="col-preco">Preço (R$)</th><th class="col-remover"><span class="no-print">Ação</span></th></tr></thead>
           <tbody id="produtos-tbody"></tbody>
         </table>
       </div>
       <div class="row-actions">
-        <span style="font-size:12px; color:var(--ink-soft); align-self:center;" id="produtos-count"></span>
-        <button class="btn btn-ghost btn-sm" id="btn-restaurar-catalogo" style="margin-left:auto;">Restaurar tabela original</button>
+        <span class="contagem" id="produtos-count"></span>
+        <button class="btn btn-ghost btn-sm empurra-direita" id="btn-restaurar-catalogo">Restaurar tabela original</button>
       </div>
     </div>
   </div>
 
   <!-- ===== TAB: HISTÓRICO ===== -->
   <div class="panel" id="panel-historico">
+    <div class="page-head">
+      <h1>Recibos salvos</h1>
+      <p>Procure a encomenda pelo nome e clique na linha para ver os recibos.</p>
+    </div>
+    <div class="field" id="historico-busca-area">
+      <label class="field-label" for="historico-busca">Buscar encomenda</label>
+      <input type="search" id="historico-busca" autocomplete="off" placeholder="Digite o nome da encomenda">
+    </div>
     <div id="historico-content">
-      <div class="empty"><span class="spinner"></span> carregando histórico...</div>
+      <div class="empty"><span class="spinner"></span> Carregando recibos...</div>
     </div>
   </div>
 
 </div>
 
 <div id="modal-root"></div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="js/menu.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
