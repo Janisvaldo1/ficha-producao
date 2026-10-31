@@ -783,7 +783,7 @@ async function renderHistorico(){
   });
   $$('.diaria-item', el).forEach(item=>{
     item.addEventListener('click', ()=>{
-      const id = parseInt(item.dataset.diarioId);
+      const id = parseInt(item.dataset.diariaId);
       const d = diarias.find(x=>x.id===id);
       if(d) abrirEditarDiaria(d);
     });
