@@ -155,7 +155,7 @@ silencioso.
 
 **4. Tela de criar simulação** — o pedaço maior do ciclo
 - [ ] Colar lista (copiada da planilha da secretária)
-- [ ] POST `/api/simulacoes` (rota já existe)
+- [x] POST `/api/simulacoes` (rota já existe)
 - [ ] Mostrar resultado logo depois (reutiliza a tela 05 em modo Simulação)
 - *Upload de xlsx fica para depois do piloto.*
 
